@@ -411,6 +411,9 @@ Race-weekend triggers fire on known dates (post-qualifying Saturday, post-race S
 - **Time-based train/val split only.** Random splits leak future race data into training.
 - **Promotion gate.** A new model must beat production on ≥ 2 of 3 metrics by a minimum margin. Logging to MLflow regardless.
 - **Idempotent writes everywhere.** All upserts use `ON CONFLICT DO UPDATE`. Re-running any flow is always safe.
-- **Model artifacts in Supabase Storage.** Render free tier has no persistent disk. Artifacts survive redeploys via download-on-startup in the loader.
+- **Model artifacts in Supabase Storage.** Render free tier has no persistent disk. Artifacts survive redeploys via downlo
+- ad-on-startup in the loader.
 - best to upgrade to paid sources
 - correction with backend 
+- 11th june
+- addition
