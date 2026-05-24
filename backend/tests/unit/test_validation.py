@@ -78,3 +78,42 @@ class TestResultsSchema:
         df.loc[0, "finish_position"] = 0
         with pytest.raises(pa.errors.SchemaErrors):
             ResultsRawSchema.validate(df, lazy=True)
+
+
+
+class TestTelemetrySchema:
+ 
+    def test_valid_rows_pass(self, telemetry_df):
+        result = TelemetryRawSchema.validate(telemetry_df, lazy=True)
+        assert len(result) == len(telemetry_df)
+ 
+    def test_lap_seconds_nullable(self, telemetry_df):
+        df = telemetry_df.copy()
+        df.loc[0, "lap_seconds"] = None
+        result = TelemetryRawSchema.validate(df, lazy=True)
+        assert len(result) == len(telemetry_df)
+ 
+    def test_invalid_compound_fails(self, telemetry_df):
+        df = telemetry_df.copy()
+        df.loc[0, "compound"] = "SUPERSOFT"
+        with pytest.raises(pa.errors.SchemaErrors) as exc:
+            TelemetryRawSchema.validate(df, lazy=True)
+        assert "compound" in exc.value.failure_cases["column"].values
+ 
+    def test_compound_nullable(self, telemetry_df):
+        df = telemetry_df.copy()
+        df.loc[0, "compound"] = None
+        result = TelemetryRawSchema.validate(df, lazy=True)
+        assert len(result) == len(telemetry_df)
+ 
+    def test_lap_too_fast_fails(self, telemetry_df):
+        df = telemetry_df.copy()
+        df.loc[0, "lap_seconds"] = 45.0
+        with pytest.raises(pa.errors.SchemaErrors):
+            TelemetryRawSchema.validate(df, lazy=True)
+ 
+    def test_lap_too_slow_fails(self, telemetry_df):
+        df = telemetry_df.copy()
+        df.loc[0, "lap_seconds"] = 400.0
+        with pytest.raises(pa.errors.SchemaErrors):
+            TelemetryRawSchema.validate(df, lazy=True)
