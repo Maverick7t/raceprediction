@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import (
-    Binginteger,
+    BigInteger,
     CheckConstraint,
     Float,
     Index,
@@ -10,7 +10,6 @@ from sqlalchemy import (
     TIMESTAMP,
     UniqueConstraint,
     func,
-
 )
 
 from sqlalchemy.orm import (
@@ -20,10 +19,13 @@ from sqlalchemy.orm import (
 
 from app.db.base import Base
 
+
 class QualifyingRaw(Base):
     __tablename__ = "qualifying_raw"
 
-    id: Mapped[int] = mapped_column(Binginteger, primary_key=Ture,
+    id: Mapped[int] = mapped_column(
+        BigInteger,
+        primary_key=True,
     )
 
     race_key: Mapped[str] = mapped_column(
@@ -44,7 +46,6 @@ class QualifyingRaw(Base):
     driver_name: Mapped[str] = mapped_column(
         Text,
         nullable=False,
-    
     )
 
     team: Mapped[str] = mapped_column(
@@ -103,22 +104,18 @@ class QualifyingRaw(Base):
         UniqueConstraint(
             "race_key",
             "driver_code",
-            name="race_driver_unique"
         ),
 
-        CheckConstraint(
-            "position BETWEEN 1 AND 20",
-            name="position_range"
+        CheckConstraint(position.between(1, 20)),
+
+        Index(
+            None,
+            "race_key",
         ),
 
         Index(
-            "idx_qualifying_race_key",
-            "race_key"
-        ),
-
-        Index(
-            "idx_qualifying_driver_year",
+            None,
             "driver_code",
-            "year"
+            "year",
         ),
     )

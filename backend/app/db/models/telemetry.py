@@ -87,26 +87,19 @@ class TelemetryRaw(Base):
             "race_key",
             "driver_code",
             "lap_number",
-            name="race_driver_lap_unique",
         ),
 
-        CheckConstraint(
-            "lap_number > 0",
-            name="lap_number_positive",
-        ),
+        CheckConstraint(lap_number > 0),
 
-        CheckConstraint(
-            "stint > 0",
-            name="stint_positive",
-        ),
+        CheckConstraint(stint > 0),
 
         Index(
-            "idx_telemetry_race_key",
+            None,
             "race_key",
         ),
 
         Index(
-            "idx_telemetry_driver_year",
+            None,
             "driver_code",
             "year",
         ),

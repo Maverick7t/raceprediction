@@ -1,6 +1,7 @@
 from datetime import datetime
+
 from sqlalchemy import (
-    Binginteger,
+    BigInteger,
     CheckConstraint,
     Float,
     Index,
@@ -14,16 +15,16 @@ from sqlalchemy import (
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
-
 )
 
 from app.db.base import Base
 
-class ResultRaw(Base):
+
+class ResultsRaw(Base):
     __tablename__ = "results_raw"
 
     id: Mapped[int] = mapped_column(
-        Binginteger, 
+        BigInteger,
         primary_key=True,
     )
 
@@ -85,7 +86,7 @@ class ResultRaw(Base):
     round: Mapped[int] = mapped_column(
         SmallInteger,
         nullable=False,
-    )   
+    )
 
     race_name: Mapped[str] = mapped_column(
         Text,
@@ -94,12 +95,12 @@ class ResultRaw(Base):
 
     circuit_id: Mapped[str] = mapped_column(
         Text,
-         nullable=False,
+        nullable=False,
     )
 
     source: Mapped[str] = mapped_column(
         Text,
-         nullable=False,
+        nullable=False,
     )
 
     ingested_at: Mapped[datetime] = mapped_column(
@@ -112,31 +113,21 @@ class ResultRaw(Base):
         UniqueConstraint(
             "race_key",
             "driver_code",
-            name="race_driver_unique",
         ),
 
-        CheckConstraint(
-            "grid_position BETWEEN 0 AND 20",
-            name="grid_position_range",
-        ),
+        CheckConstraint(grid_position.between(0, 20)),
 
-        CheckConstraint(
-            "finish_position BETWEEN 1 AND 20",
-            name="finish_position_range",
-        ),
+        CheckConstraint(finish_position.between(1, 20)),
 
-        CheckConstraint(
-            "points >= 0",
-            name="points_non_negative",
-        ),
+        CheckConstraint(points >= 0),
 
         Index(
-            "idx_results_race_key",
+            None,
             "race_key",
         ),
 
         Index(
-            "idx_results_driver_year",
+            None,
             "driver_code",
             "year",
         ),
