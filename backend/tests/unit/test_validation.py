@@ -93,3 +93,49 @@ class TestResultsSchema:
         df.loc[0, "finish_position"] = 0  # 0 is not a valid finish position
         with pytest.raises(pa.errors.SchemaErrors):
             ResultsRawSchema.validate(df, lazy=True)
+
+
+# ---------------------------------------------------------------------------
+# TelemetryRawSchema
+# ---------------------------------------------------------------------------
+ 
+class TestTelemetrySchema:
+ 
+    def test_valid_rows_pass(self, valid_telemetry_df):
+        result = TelemetryRawSchema.validate(valid_telemetry_df, lazy=True)
+        assert len(result) == len(valid_telemetry_df)
+ 
+    def test_lap_seconds_nullable(self, valid_telemetry_df):
+        """Safety car laps may have no valid lap time."""
+        df = valid_telemetry_df.copy()
+        df.loc[0, "lap_seconds"] = None
+        result = TelemetryRawSchema.validate(df, lazy=True)
+        assert len(result) == 2
+ 
+    def test_invalid_compound_fails(self, valid_telemetry_df):
+        df = valid_telemetry_df.copy()
+        df.loc[0, "compound"] = "SUPERSOFT"  # Retired compound — not in valid set
+        with pytest.raises(pa.errors.SchemaErrors) as exc_info:
+            TelemetryRawSchema.validate(df, lazy=True)
+        failures = exc_info.value.failure_cases
+        assert "compound" in failures["column"].values
+ 
+    def test_compound_nullable(self, valid_telemetry_df):
+        """Compound can be null on the first lap before compound is reported."""
+        df = valid_telemetry_df.copy()
+        df.loc[0, "compound"] = None
+        result = TelemetryRawSchema.validate(df, lazy=True)
+        assert len(result) == 2
+ 
+    def test_lap_too_fast_fails(self, valid_telemetry_df):
+        df = valid_telemetry_df.copy()
+        df.loc[0, "lap_seconds"] = 50.0  # Under 60s — impossible for a race lap
+        with pytest.raises(pa.errors.SchemaErrors):
+            TelemetryRawSchema.validate(df, lazy=True)
+ 
+    def test_lap_too_slow_fails(self, valid_telemetry_df):
+        """A lap over 300s (5 min) is a crash/retirement, not a real lap time."""
+        df = valid_telemetry_df.copy()
+        df.loc[0, "lap_seconds"] = 400.0
+        with pytest.raises(pa.errors.SchemaErrors):
+            TelemetryRawSchema.validate(df, lazy=True)
