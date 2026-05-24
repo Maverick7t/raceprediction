@@ -51,3 +51,30 @@ class TestQualifyingSchema:
         df.loc[0, "year"] = 2010
         with pytest.raises(pa.errors.SchemaErrors):
             QualifyingRawSchema.validate(df, lazy=True)
+
+
+
+class TestResultsSchema:
+ 
+    def test_valid_rows_pass(self, results_df):
+        result = ResultsRawSchema.validate(results_df, lazy=True)
+        assert len(result) == 2
+ 
+    def test_grid_zero_allowed(self, results_df):
+        df = results_df.copy()
+        df.loc[0, "grid_position"] = 0
+        result = ResultsRawSchema.validate(df, lazy=True)
+        assert len(result) == 2
+ 
+    def test_negative_points_fails(self, results_df):
+        df = results_df.copy()
+        df.loc[0, "points"] = -5.0
+        with pytest.raises(pa.errors.SchemaErrors) as exc:
+            ResultsRawSchema.validate(df, lazy=True)
+        assert "points" in exc.value.failure_cases["column"].values
+ 
+    def test_finish_position_zero_fails(self, results_df):
+        df = results_df.copy()
+        df.loc[0, "finish_position"] = 0
+        with pytest.raises(pa.errors.SchemaErrors):
+            ResultsRawSchema.validate(df, lazy=True)
