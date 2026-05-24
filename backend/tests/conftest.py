@@ -54,4 +54,44 @@ def valid_qualifying_df():
             "source": "ergast",
         },
     ])
- 
+
+@pytest.fixture
+def valid_results_df():
+    """A minimal valid results DataFrame that passes ResultsRawSchema."""
+    return pd.DataFrame([
+        {
+            "driver_code": "VER",
+            "driver_id": "max_verstappen",
+            "driver_name": "Max Verstappen",
+            "team": "Red Bull Racing",
+            "team_id": "red_bull",
+            "grid_position": 1,
+            "finish_position": 1,
+            "points": 25.0,
+            "status": "Finished",
+            "year": 2024,
+            "round": 1,
+            "race_key": "bahrain_grand_prix_2024",
+            "race_name": "Bahrain Grand Prix",
+            "circuit_id": "bahrain",
+            "source": "ergast",
+        },
+        {
+            "driver_code": "LEC",
+            "driver_id": "leclerc",
+            "driver_name": "Charles Leclerc",
+            "team": "Ferrari",
+            "team_id": "ferrari",
+            "grid_position": 2,
+            "finish_position": 2,
+            "points": 18.0,
+            "status": "Finished",
+            "year": 2024,
+            "round": 1,
+            "race_key": "bahrain_grand_prix_2024",
+            "race_name": "Bahrain Grand Prix",
+            "circuit_id": "bahrain",
+            "source": "ergast",
+        },
+    ])
+  
