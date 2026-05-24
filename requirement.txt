@@ -1,7 +1,24 @@
-fastf1==0.1.0
+fastf1==3.8.3
 requests==2.31.0
 python-dotenv==1.0.0
 sqlalchemy>=2.0
 alembic>=1.13
 psycopg[binary]>=3.1
 python-dotenv>=1.0
+# =============================================================================
+# Development + CI dependencies
+# Never install these on Render (production).
+# Install locally with: pip install -r requirements-dev.txt
+# =============================================================================
+
+# Testing
+pytest==8.3.3
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+
+# Linting + formatting
+ruff==0.8.0
+black==24.10.0
+
+# Type checking (optional but catches bugs before runtime)
+pyright==1.1.390
