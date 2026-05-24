@@ -95,3 +95,35 @@ def valid_results_df():
         },
     ])
   
+@pytest.fixture
+def valid_telemetry_df():
+    """A minimal valid telemetry DataFrame that passes TelemetryRawSchema."""
+    return pd.DataFrame([
+        {
+            "driver_code": "VER",
+            "lap_number": 1,
+            "lap_seconds": 95.2,
+            "stint": 1,
+            "compound": "SOFT",
+            "tyre_life": 1,
+            "is_accurate": True,
+            "year": 2024,
+            "round": 1,
+            "race_key": "bahrain_grand_prix_2024",
+            "source": "fastf1",
+        },
+        {
+            "driver_code": "VER",
+            "lap_number": 2,
+            "lap_seconds": 90.1,
+            "stint": 1,
+            "compound": "SOFT",
+            "tyre_life": 2,
+            "is_accurate": True,
+            "year": 2024,
+            "round": 1,
+            "race_key": "bahrain_grand_prix_2024",
+            "source": "fastf1",
+        },
+    ])
+   
