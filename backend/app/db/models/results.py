@@ -115,4 +115,29 @@ class ResultRaw(Base):
             name="race_driver_unique",
         ),
 
-        
+        CheckConstraint(
+            "grid_position BETWEEN 0 AND 20",
+            name="grid_position_range",
+        ),
+
+        CheckConstraint(
+            "finish_position BETWEEN 1 AND 20",
+            name="finish_position_range",
+        ),
+
+        CheckConstraint(
+            "points >= 0",
+            name="points_non_negative",
+        ),
+
+        Index(
+            "idx_results_race_key",
+            "race_key",
+        ),
+
+        Index(
+            "idx_results_driver_year",
+            "driver_code",
+            "year",
+        ),
+    )
