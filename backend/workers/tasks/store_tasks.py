@@ -1,0 +1,31 @@
+"""
+Prefect store tasks.
+ 
+These are intentionally thin — each task calls exactly one repository method.
+No business logic lives here. The repository owns the upsert logic.
+ 
+Keeping store tasks separate from fetch/validate tasks means Prefect
+can retry storage independently. If Supabase has a transient outage,
+only the store task retries — not the fetch.
+"""
+ 
+import pandas as pd
+from prefect import task
+ 
+from app.core.logging import get_logger
+from app.repositories.raw_data_repo import RawDataRepository
+ 
+logger = get_logger(__name__)
+_repo = RawDataRepository()
+ 
+ 
+@task(
+    name="store_qualifying_raw",
+    retries=2,
+    retry_delay_seconds=10,
+    description="Upsert qualifying rows into qualifying_raw table",
+)
+def store_qualifying_raw(df: pd.DataFrame) -> int:
+    count = _repo.upsert_qualifying_raw(df)
+    logger.info(f"store_qualifying_raw: {count} rows written")
+    return count
