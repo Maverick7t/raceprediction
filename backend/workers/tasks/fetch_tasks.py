@@ -32,3 +32,12 @@ _openf1 = OpenF1Client()
 )
 def fetch_qualifying_ergast(year: int, round_number: int) -> pd.DataFrame:
     return _ergast.get_qualifying_results(year, round_number)
+
+@task(
+    name="fetch_qualifying_fastf1",
+    retries=3,
+    retry_delay_seconds=exponential_backoff(backoff_factor=2),
+    description="Fetch qualifying lap times from FastF1 (enriches Ergast data)",
+)
+def fetch_qualifying_fastf1(year: int, round_number: int) -> pd.DataFrame:
+    return load_qualifying_session(year, round_number)
