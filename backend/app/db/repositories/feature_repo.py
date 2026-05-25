@@ -134,3 +134,44 @@ class FeatureRepository:
             f"version={feature_version} from_year={from_year}"
         )
         return df
+    
+    def count_rows_for_version(self, feature_version: str = CURRENT_FEATURE_VERSION) -> int:
+        with get_session() as session:
+            count = session.execute(text("""
+                SELECT COUNT(*) FROM features_by_race
+                WHERE feature_version = :version
+            """), {"version": feature_version}).scalar()
+        return count or 0
+ 
+    @staticmethod
+    def _prepare_rows(df: pd.DataFrame) -> list[dict]:
+        import math
+        import numpy as np
+ 
+        now = datetime.now(timezone.utc)
+        rows = df.to_dict(orient="records")
+        cleaned = []
+ 
+        for row in rows:
+            row.setdefault("computed_at", now)
+            row.setdefault("feature_version", CURRENT_FEATURE_VERSION)
+            clean = {}
+            for k, v in row.items():
+                if v is None:
+                    clean[k] = None
+                elif isinstance(v, np.integer):
+                    clean[k] = int(v)
+                elif isinstance(v, np.floating):
+                    clean[k] = None if math.isnan(v) else float(v)
+                elif isinstance(v, np.bool_):
+                    clean[k] = bool(v)
+                elif isinstance(v, float) and math.isnan(v):
+                    clean[k] = None
+                else:
+                    try:
+                        clean[k] = None if pd.isna(v) else v
+                    except (TypeError, ValueError):
+                        clean[k] = v
+            cleaned.append(clean)
+ 
+        return cleaned
