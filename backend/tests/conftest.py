@@ -1,55 +1,29 @@
-"""
-conftest.py — shared fixtures for all Phase 1 tests.
- 
-Unit tests use SQLite in-memory (no network, no credentials needed).
-Integration tests use real Postgres via DATABASE_URL env var.
-"""
- 
+# tests/conftest.py — remove the sqlite override completely
 import os
-import sys
-
-import pytest
 import pandas as pd
- 
-from sqlalchemy import create_engine, event
+import pytest
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
- 
-os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
-os.environ.setdefault("ENVIRONMENT", "test")
-os.environ.setdefault("LOG_LEVEL", "WARNING")
-
-backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if backend_path not in sys.path:
-    sys.path.insert(0, backend_path)
- 
 from app.db.base import Base
-import app.db.models  # noqa — registers all models on Base.metadata
- 
- 
+import app.db.models  # noqa
+
 @pytest.fixture(scope="session")
 def engine():
-    _engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-    )
- 
-    @event.listens_for(_engine, "connect")
-    def set_pragma(dbapi_conn, _):
-        dbapi_conn.cursor().execute("PRAGMA foreign_keys=ON")
- 
+    from app.core.config import config
+    _engine = create_engine(config.DATABASE_URL)
     Base.metadata.create_all(bind=_engine)
     yield _engine
     _engine.dispose()
- 
+
 @pytest.fixture(scope="function")
 def session(engine):
     connection = engine.connect()
     transaction = connection.begin()
-    Session = sessionmaker(bind=connection, autoflush=False, autocommit=False)
+    Session = sessionmaker(bind=connection)
     db = Session()
     yield db
     db.close()
-    transaction.rollback()
+    transaction.rollback()  # rolls back after every test — no dirty data
     connection.close()
  
  
