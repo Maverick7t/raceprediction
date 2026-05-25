@@ -50,3 +50,17 @@ def post_race_flow(year: int, round_number: int) -> dict:
     """
     run_logger = get_run_logger()
     run_logger.info(f"post_race_flow started year={year} round={round_number}")
+
+
+    # ----------------Step 1: Race results — authoritative from Ergast----------------------------------------------------------------
+    results_df = fetch_race_results(year, round_number)
+ 
+    race_key = (
+        results_df["race_key"].iloc[0]
+        if not results_df.empty
+        else f"unknown_{year}_{round_number}"
+    )
+ 
+    validated_results = validate_results(results_df, race_key)
+    results_stored = store_results_raw(validated_results)
+    run_logger.info(f"Results stored: {results_stored} rows race_key={race_key}")
