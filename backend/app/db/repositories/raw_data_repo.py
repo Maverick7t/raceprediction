@@ -14,6 +14,8 @@ Conflict keys:
 from datetime import datetime, timezone
  
 import pandas as pd
+import math
+import numpy as np
 from sqlalchemy import text
 from sqlalchemy.orm import Session
  
@@ -24,6 +26,31 @@ from app.db.session import get_session
 logger = get_logger(__name__)
  
 _BATCH_SIZE = 500
+
+
+def _to_python_type(value):
+    """Convert numpy/pandas scalars into plain Python types.
+
+    Tests import this function directly.
+    """
+    import math
+    import numpy as np
+
+    if value is None:
+        return None
+    if isinstance(value, np.integer):
+        return int(value)
+    if isinstance(value, np.floating):
+        return None if math.isnan(value) else float(value)
+    if isinstance(value, np.bool_):
+        return bool(value)
+    if isinstance(value, float) and math.isnan(value):
+        return None
+
+    try:
+        return None if pd.isna(value) else value
+    except (TypeError, ValueError):
+        return value
  
  
 class RawDataRepository:
@@ -199,32 +226,13 @@ class RawDataRepository:
         Casts numpy types to Python native — SQLAlchemy's driver
         cannot serialise numpy.int64 / numpy.float64.
         """
-        import math
-        import numpy as np
- 
         now = datetime.now(timezone.utc)
         rows = df.to_dict(orient="records")
         cleaned = []
  
         for row in rows:
             row["ingested_at"] = now
-            clean_row = {}
-            for k, v in row.items():
-                if v is None:
-                    clean_row[k] = None
-                elif isinstance(v, np.integer):
-                    clean_row[k] = int(v)
-                elif isinstance(v, np.floating):
-                    clean_row[k] = None if math.isnan(v) else float(v)
-                elif isinstance(v, np.bool_):
-                    clean_row[k] = bool(v)
-                elif isinstance(v, float) and math.isnan(v):
-                    clean_row[k] = None
-                else:
-                    try:
-                        clean_row[k] = None if pd.isna(v) else v
-                    except (TypeError, ValueError):
-                        clean_row[k] = v
+            clean_row = {k: _to_python_type(v) for k, v in row.items()}
             cleaned.append(clean_row)
  
         return cleaned
