@@ -81,3 +81,38 @@ def telemetry_df():
             "is_accurate": True,
         })
     return pd.DataFrame(rows)
+
+
+# ---------------------------------------------------------------------------
+# avg_finish
+# ---------------------------------------------------------------------------
+ 
+class TestAvgFinish:
+ 
+    def test_basic_average(self, driver_results_5):
+        result = _avg_finish(driver_results_5)
+        assert result == pytest.approx(3.0, abs=0.01)
+ 
+    def test_empty_returns_none(self):
+        assert _avg_finish(pd.DataFrame()) is None
+ 
+    def test_dnf_excluded_from_average(self, driver_results_with_dnf):
+        """DNFs don't count as a finish — excluded from avg calculation."""
+        result = _avg_finish(driver_results_with_dnf)
+        # Finished: P1, P2, P3 → avg = 2.0
+        assert result == pytest.approx(2.0, abs=0.01)
+ 
+    def test_uses_only_last_5(self):
+        """Only the most recent WINDOW races are used."""
+        rows = [
+            {"driver_code": "VER", "team_id": "red_bull", "finish_position": 20,
+             "points": 0.0, "status": "Finished", "year": 2023, "round": i}
+            for i in range(1, 11)   # 10 old races at P20
+        ] + [
+            {"driver_code": "VER", "team_id": "red_bull", "finish_position": 1,
+             "points": 25.0, "status": "Finished", "year": 2024, "round": i}
+            for i in range(1, 6)    # 5 recent races at P1
+        ]
+        df = pd.DataFrame(rows)
+        result = _avg_finish(df)
+        assert result == pytest.approx(1.0, abs=0.01)
