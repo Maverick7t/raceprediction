@@ -104,3 +104,33 @@ class FeatureRepository:
             return pd.DataFrame()
  
         return pd.DataFrame(rows)
+    
+
+    def get_training_dataset(
+        self,
+        feature_version: str = CURRENT_FEATURE_VERSION,
+        from_year: int = 2018,
+    ) -> pd.DataFrame:
+        """
+        Read all feature rows that have a known result (finish_position not null).
+        Used by the ML training pipeline.
+        Only returns rows where is_winner and is_podium targets are populated.
+        """
+        with get_session() as session:
+            result = session.execute(text("""
+                SELECT * FROM features_by_race
+                WHERE feature_version = :feature_version
+                AND year >= :from_year
+                AND finish_position IS NOT NULL
+                AND is_winner IS NOT NULL
+                AND is_podium IS NOT NULL
+                ORDER BY year ASC, round ASC
+            """), {"feature_version": feature_version, "from_year": from_year})
+            rows = result.mappings().all()
+ 
+        df = pd.DataFrame(rows)
+        logger.info(
+            f"Training dataset: {len(df)} rows "
+            f"version={feature_version} from_year={from_year}"
+        )
+        return df
