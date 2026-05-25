@@ -159,3 +159,34 @@ class ErgastClient:
             })
  
         return pd.DataFrame(rows)
+    
+
+    def get_constructor_standings(
+        self, year: int, round_number: Optional[int] = None
+    ) -> pd.DataFrame:
+        """Fetch constructor championship standings."""
+        path = (
+            f"/{year}/{round_number}/constructorStandings.json"
+            if round_number
+            else f"/{year}/constructorStandings.json"
+        )
+        data = self._get(path)
+        standings_lists = self._extract_races(data, "StandingsTable", "StandingsLists")
+ 
+        if not standings_lists:
+            return pd.DataFrame()
+ 
+        rows = []
+        for entry in standings_lists[0]["ConstructorStandings"]:
+            rows.append({
+                "team_id": entry["Constructor"]["constructorId"],
+                "team": entry["Constructor"]["name"],
+                "position": int(entry["position"]),
+                "points": float(entry["points"]),
+                "wins": int(entry["wins"]),
+                "year": year,
+                "round": round_number,
+                "source": "ergast",
+            })
+ 
+        return pd.DataFrame(rows)
