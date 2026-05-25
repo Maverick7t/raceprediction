@@ -82,3 +82,44 @@ class ErgastClient:
  
         logger.info(f"Ergast race results: {len(rows)} rows year={year} round={round_number}")
         return pd.DataFrame(rows)
+    
+
+    def get_qualifying_results(self, year: int, round_number: int) -> pd.DataFrame:
+        """
+        Fetch qualifying classification for a given round.
+        Returns one row per driver with Q1/Q2/Q3 times as strings.
+        Q2 and Q3 are nullable — not all drivers reach those segments.
+        """
+        data = self._get(f"/{year}/{round_number}/qualifying.json?limit=30")
+        races = self._extract_races(data, "RaceTable", "Races")
+ 
+        if not races:
+            raise IngestionError(
+                "ergast", f"No qualifying results for year={year} round={round_number}"
+            )
+ 
+        race = races[0]
+        race_key = _build_race_key(race["raceName"], year)
+        rows = []
+ 
+        for r in race["QualifyingResults"]:
+            rows.append({
+                "driver_code": r["Driver"].get("code", r["Driver"]["driverId"][:3].upper()),
+                "driver_id": r["Driver"]["driverId"],
+                "driver_name": f"{r['Driver']['givenName']} {r['Driver']['familyName']}",
+                "team": r["Constructor"]["name"],
+                "team_id": r["Constructor"]["constructorId"],
+                "position": int(r["position"]),
+                "q1_time": r.get("Q1") or None,
+                "q2_time": r.get("Q2") or None,
+                "q3_time": r.get("Q3") or None,
+                "year": year,
+                "round": round_number,
+                "race_key": race_key,
+                "race_name": race["raceName"],
+                "circuit_id": race["Circuit"]["circuitId"],
+                "source": "ergast",
+            })
+ 
+        logger.info(f"Ergast qualifying: {len(rows)} rows year={year} round={round_number}")
+        return pd.DataFrame(rows)
