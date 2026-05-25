@@ -258,3 +258,163 @@ def _load_telemetry(race_key: str) -> pd.DataFrame:
         """), {"race_key": race_key})
         rows = result.mappings().all()
     return pd.DataFrame(rows)
+
+
+# ---------------------------------------------------------------------------
+# Feature computation functions — one per feature, independently testable
+# ---------------------------------------------------------------------------
+ 
+def _avg_finish(driver_results: pd.DataFrame) -> float | None:
+    """Average finish position over last WINDOW races."""
+    if driver_results.empty:
+        return None
+    last = driver_results.tail(WINDOW)
+    finished = last[~last["status"].isin(DNF_STATUSES)]
+    if finished.empty:
+        return None
+    return round(float(finished["finish_position"].mean()), 3)
+ 
+ 
+def _avg_quali(driver_quali: pd.DataFrame) -> float | None:
+    """Average qualifying position over last WINDOW races."""
+    if driver_quali.empty:
+        return None
+    last = driver_quali.tail(WINDOW)
+    return round(float(last["position"].mean()), 3)
+ 
+ 
+def _podium_rate(driver_results: pd.DataFrame) -> float | None:
+    """Fraction of last WINDOW races where driver finished on podium."""
+    if driver_results.empty:
+        return None
+    last = driver_results.tail(WINDOW)
+    podiums = (last["finish_position"] <= 3).sum()
+    return round(float(podiums / len(last)), 3)
+ 
+ 
+def _dnf_rate(driver_results: pd.DataFrame) -> float | None:
+    """Fraction of last WINDOW races where driver DNF'd."""
+    if driver_results.empty:
+        return None
+    last = driver_results.tail(WINDOW)
+    dnfs = last["status"].isin(DNF_STATUSES).sum()
+    return round(float(dnfs / len(last)), 3)
+ 
+ 
+def _wet_weather_score(driver_results: pd.DataFrame) -> float | None:
+    """
+    Proxy wet weather score — average points in races at known wet circuits.
+    Real implementation would filter by actual weather data.
+    For v1, we use Spa, Silverstone, Interlagos as wet-prone proxies.
+    Returns None if no data at these circuits.
+    """
+    if driver_results.empty:
+        return None
+    # No circuit_id in results history — return neutral score for v1
+    # Phase 2 enhancement: join with qualifying_raw to get circuit_id
+    return 5.0
+ 
+ 
+def _teammate_delta(
+    driver_code: str,
+    team_id: str,
+    quali_history: pd.DataFrame,
+) -> float | None:
+    """
+    Average qualifying position delta vs teammate over last WINDOW races.
+    Negative = driver qualifies ahead of teammate (good).
+    """
+    if quali_history.empty:
+        return None
+ 
+    team_quali = quali_history[quali_history["team_id"] == team_id].copy()
+    if team_quali.empty:
+        return None
+ 
+    # Get last WINDOW rounds this team appeared in
+    rounds = team_quali[["year", "round"]].drop_duplicates().tail(WINDOW)
+    if rounds.empty:
+        return None
+ 
+    deltas = []
+    for _, r in rounds.iterrows():
+        round_data = team_quali[
+            (team_quali["year"] == r["year"]) &
+            (team_quali["round"] == r["round"])
+        ]
+        if len(round_data) < 2:
+            continue
+        driver_pos = round_data[round_data["driver_code"] == driver_code]["position"]
+        teammate_pos = round_data[round_data["driver_code"] != driver_code]["position"]
+        if driver_pos.empty or teammate_pos.empty:
+            continue
+        deltas.append(float(driver_pos.iloc[0]) - float(teammate_pos.iloc[0]))
+ 
+    if not deltas:
+        return None
+    return round(float(np.mean(deltas)), 3)
+ 
+ 
+def _tire_management_score(driver_telemetry: pd.DataFrame) -> float | None:
+    """
+    Tire management score — how well pace is maintained in late stint.
+    Computed as: (avg lap time in laps 1-5 of stint) / (avg lap time in last 5 laps of stint)
+    Score > 1.0 means degrading, < 1.0 means improving.
+    Lower is better for tire management (less degradation).
+    Only uses accurate laps.
+    """
+    if driver_telemetry.empty:
+        return None
+ 
+    accurate = driver_telemetry[
+        (driver_telemetry["is_accurate"] == True) &
+        (driver_telemetry["lap_seconds"].notna())
+    ]
+    if accurate.empty:
+        return None
+ 
+    try:
+        early_laps = accurate.groupby("stint").apply(
+            lambda g: g.nsmallest(5, "tyre_life")["lap_seconds"].mean()
+        )
+        late_laps = accurate.groupby("stint").apply(
+            lambda g: g.nlargest(5, "tyre_life")["lap_seconds"].mean()
+        )
+        if early_laps.empty or late_laps.empty:
+            return None
+        ratio = float((late_laps / early_laps).mean())
+        return round(ratio, 4)
+    except Exception:
+        return None
+ 
+ 
+def _constructor_form(team_results: pd.DataFrame) -> float | None:
+    """Rolling average points per race for the constructor over last WINDOW races."""
+    if team_results.empty:
+        return None
+    last = team_results.tail(WINDOW * 2)  # 2 drivers × WINDOW races
+    if last.empty:
+        return None
+    points_by_round = last.groupby(["year", "round"])["points"].sum()
+    return round(float(points_by_round.tail(WINDOW).mean()), 3)
+ 
+ 
+def _pitstop_avg(driver_telemetry: pd.DataFrame) -> float | None:
+    """
+    Proxy pit stop duration — average stint transition lap time delta.
+    Real pit stop data would come from OpenF1 in Phase 2 enhancement.
+    For v1, return None (will be enhanced when OpenF1 pit data is stored).
+    """
+    return None
+ 
+ 
+def _reliability_score(team_results: pd.DataFrame) -> float | None:
+    """
+    Constructor reliability — inverse of team DNF rate over last WINDOW*2 race entries.
+    1.0 = perfectly reliable, 0.0 = DNF every race.
+    """
+    if team_results.empty:
+        return None
+    last = team_results.tail(WINDOW * 2)
+    dnfs = last["status"].isin(DNF_STATUSES).sum()
+    return round(float(1 - dnfs / len(last)), 3)
