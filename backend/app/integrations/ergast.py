@@ -241,3 +241,20 @@ class ErgastClient:
             return data["MRData"][table_key][list_key]
         except (KeyError, TypeError):
             return []
+
+
+
+            # ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+ 
+def _build_race_key(race_name: str, year: int) -> str:
+    slug = (
+        race_name.lower()
+        .strip()
+        .replace(" ", "_")
+        .replace("-", "_")
+        .replace("'", "")
+        .replace(".", "")
+    )
+    return f"{slug}_{year}"
