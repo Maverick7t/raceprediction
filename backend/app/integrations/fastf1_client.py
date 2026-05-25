@@ -87,3 +87,57 @@ def load_qualifying_session(year: int, round_number: int) -> pd.DataFrame:
  
     logger.info(f"FastF1 qualifying: {len(best)} drivers loaded race_key={race_key}")
     return best
+
+
+def load_race_telemetry(year: int, round_number: int) -> pd.DataFrame:
+    """
+    Load race lap data from FastF1.
+    Returns one row per driver per lap with compound, tyre life, and lap time.
+    Telemetry is at lap granularity — not per-sample — to keep row counts manageable.
+ 
+    Raises IngestionError on hard failure. Caller should handle gracefully.
+    """
+    logger.info(f"FastF1: loading race telemetry year={year} round={round_number}")
+ 
+    try:
+        session = fastf1.get_session(year, round_number, "R")
+        session.load(laps=True, telemetry=False, weather=False, messages=False)
+    except Exception as e:
+        raise IngestionError("fastf1", f"Race session load failed: {e}") from e
+ 
+    laps = session.laps
+ 
+    if laps is None or laps.empty:
+        raise IngestionError(
+            "fastf1",
+            f"No lap data in race session year={year} round={round_number}",
+        )
+ 
+    wanted = ["Driver", "LapNumber", "LapTime", "Stint", "Compound", "TyreLife", "IsAccurate"]
+    df = laps[wanted].copy()
+ 
+    df = df.rename(columns={
+        "Driver": "driver_code",
+        "LapNumber": "lap_number",
+        "LapTime": "lap_time",
+        "Stint": "stint",
+        "Compound": "compound",
+        "TyreLife": "tyre_life",
+        "IsAccurate": "is_accurate",
+    })
+ 
+    df["lap_seconds"] = df["lap_time"].dt.total_seconds()
+ 
+    race_key = _build_race_key(session.event["EventName"], year)
+    df["race_key"] = race_key
+    df["year"] = year
+    df["round"] = round_number
+    df["source"] = "fastf1"
+ 
+    df = df.drop(columns=["lap_time"])
+ 
+    # Filter out safety car / outlap rows that have impossibly slow times
+    df = df[df["lap_seconds"].isna() | (df["lap_seconds"] < 300)]
+ 
+    logger.info(f"FastF1 telemetry: {len(df)} lap rows loaded race_key={race_key}")
+    return df.reset_index(drop=True)
