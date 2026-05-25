@@ -79,3 +79,15 @@ def fetch_driver_standings(year: int, round_number: int) -> pd.DataFrame:
 )
 def fetch_constructor_standings(year: int, round_number: int) -> pd.DataFrame:
     return _ergast.get_constructor_standings(year, round_number)
+
+
+@task(
+    name="fetch_pit_stops_openf1",
+    retries=2,
+    retry_delay_seconds=10,
+    description="Fetch pit stop data from OpenF1 (supplementary, non-fatal)",
+)
+def fetch_pit_stops(year: int, round_number: int) -> pd.DataFrame:
+    """OpenF1 is optional. Returns empty DataFrame on all failures."""
+    return _openf1.get_pit_stops(year, round_number)
+ 
