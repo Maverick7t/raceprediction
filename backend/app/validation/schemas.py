@@ -37,3 +37,25 @@ QualifyingRawSchema = DataFrameSchema(
     strict=False,
     coerce=True,
 )
+
+ResultsRawSchema = DataFrameSchema(
+    columns={
+        "driver_code": Column(str, Check(lambda s: s.str.len().between(2, 4)), nullable=False),
+        "driver_id": Column(str, nullable=False),
+        "driver_name": Column(str, nullable=False),
+        "team": Column(str, nullable=False),
+        "team_id": Column(str, nullable=False),
+        "grid_position": Column(int, Check.in_range(0, 20), nullable=False),
+        "finish_position": Column(int, Check.in_range(1, 20), nullable=False),
+        "points": Column(float, Check.greater_than_or_equal_to(0.0), nullable=False),
+        "status": Column(str, nullable=False),
+        "year": Column(int, Check.in_range(2018, 2035), nullable=False),
+        "round": Column(int, Check.in_range(1, 25), nullable=False),
+        "race_key": Column(str, nullable=False),
+        "race_name": Column(str, nullable=False),
+        "circuit_id": Column(str, nullable=False),
+        "source": Column(str, nullable=False),
+    },
+    strict=False,
+    coerce=True,
+)
