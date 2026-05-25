@@ -20,10 +20,8 @@ from prefect import task
  
 from app.core.exceptions import ValidationError
 from app.core.logging import get_logger
-from app.repositories.raw_data_repo import RawDataRepository
-from app.validation.qualifying_schema import QualifyingRawSchema
-from app.validation.results_schema import ResultsRawSchema
-from app.validation.telemetry_schema import TelemetryRawSchema
+from app.db.repositories.raw_data_repo import RawDataRepository
+from app.validation.schemas import QualifyingRawSchema, ResultsRawSchema, TelemetryRawSchema
  
 logger = get_logger(__name__)
 _repo = RawDataRepository()
