@@ -32,3 +32,12 @@ _repo = RawDataRepository()
 @task(name="validate_qualifying", description="Validate qualifying rows against Pandera schema")
 def validate_qualifying(df: pd.DataFrame, race_key: str) -> pd.DataFrame:
     return _validate(df, QualifyingRawSchema, "qualifying_raw", race_key)
+
+@task(name="validate_results", description="Validate race result rows against Pandera schema")
+def validate_results(df: pd.DataFrame, race_key: str) -> pd.DataFrame:
+    return _validate(df, ResultsRawSchema, "results_raw", race_key)
+ 
+ 
+@task(name="validate_telemetry", description="Validate telemetry rows against Pandera schema")
+def validate_telemetry(df: pd.DataFrame, race_key: str) -> pd.DataFrame:
+    return _validate(df, TelemetryRawSchema, "telemetry_raw", race_key)
