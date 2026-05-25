@@ -141,3 +141,19 @@ def load_race_telemetry(year: int, round_number: int) -> pd.DataFrame:
  
     logger.info(f"FastF1 telemetry: {len(df)} lap rows loaded race_key={race_key}")
     return df.reset_index(drop=True)
+
+
+def get_season_schedule(year: int) -> pd.DataFrame:
+    """
+    Return the full event schedule for a season.
+    Used by GitHub Actions to determine trigger dates.
+    """
+    try:
+        schedule = fastf1.get_event_schedule(year, include_testing=False)
+        df = schedule[["RoundNumber", "EventName", "Location", "Country", "EventDate"]].copy()
+        df.columns = ["round", "event_name", "location", "country", "event_date"]
+        df["year"] = year
+        return df
+    except Exception as e:
+        raise IngestionError("fastf1", f"Schedule load failed for year={year}: {e}") from e
+ 
