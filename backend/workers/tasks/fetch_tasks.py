@@ -41,3 +41,22 @@ def fetch_qualifying_ergast(year: int, round_number: int) -> pd.DataFrame:
 )
 def fetch_qualifying_fastf1(year: int, round_number: int) -> pd.DataFrame:
     return load_qualifying_session(year, round_number)
+
+@task(
+    name="fetch_race_results",
+    retries=3,
+    retry_delay_seconds=exponential_backoff(backoff_factor=2),
+    description="Fetch final race classification from Ergast",
+)
+def fetch_race_results(year: int, round_number: int) -> pd.DataFrame:
+    return _ergast.get_race_results(year, round_number)
+ 
+ 
+@task(
+    name="fetch_race_telemetry",
+    retries=3,
+    retry_delay_seconds=exponential_backoff(backoff_factor=2),
+    description="Fetch race lap-level telemetry from FastF1",
+)
+def fetch_race_telemetry(year: int, round_number: int) -> pd.DataFrame:
+    return load_race_telemetry(year, round_number)
