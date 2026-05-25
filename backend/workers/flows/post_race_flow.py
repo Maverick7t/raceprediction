@@ -86,3 +86,41 @@ def post_race_flow(year: int, round_number: int) -> dict:
         run_logger.info(f"OpenF1 pit stops fetched: {len(pit_df)} rows (not stored in phase 1)")
     else:
         run_logger.info("OpenF1 pit stops: no data (non-fatal)")
+
+
+# -------------Step 4: Standings — supplementary, non-fatal---------------------------------------
+    standings_fetched = False
+    try:
+        _driver_standings = fetch_driver_standings(year, round_number)
+        _constructor_standings = fetch_constructor_standings(year, round_number)
+        # Standings are stored in Phase 4 (standings_cache table).
+        # Fetched here so the data is available for feature engineering in Phase 2.
+        standings_fetched = True
+        run_logger.info(
+            f"Standings fetched: {len(_driver_standings)} driver rows, "
+            f"{len(_constructor_standings)} constructor rows"
+        )
+    except Exception as exc:
+        run_logger.warning(f"Standings fetch failed (non-fatal): {exc}")
+ 
+    run_logger.info(f"post_race_flow complete race_key={race_key}")
+ 
+    return {
+        "race_key": race_key,
+        "year": year,
+        "round": round_number,
+        "results_stored": results_stored,
+        "telemetry_stored": telemetry_stored,
+        "standings_fetched": standings_fetched,
+        # This value is read by the Phase 3 retraining trigger
+        "new_results_count": results_stored,
+    }
+ 
+ 
+if __name__ == "__main__":
+    import sys
+    year = int(sys.argv[1]) if len(sys.argv) > 1 else 2024
+    round_num = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+    result = post_race_flow(year, round_num)
+    print(result)
+ 
