@@ -69,4 +69,125 @@ DNF_STATUSES = {
 }
  
 WINDOW = 5  # rolling window size
+
+
+# ---------------------------------------------------------------------------
+# Main entry point
+# ---------------------------------------------------------------------------
  
+def compute_features_for_race(
+    race_key: str,
+    year: int,
+    round_number: int,
+) -> pd.DataFrame:
+    """
+    Compute all features for every driver in a given race.
+ 
+    Called twice per race weekend:
+      1. After qualifying (Saturday) — session features available,
+         finish_position/is_winner/is_podium are None (race hasn't happened)
+      2. After race (Sunday) — targets filled in
+ 
+    Returns one row per driver ready for features_by_race upsert.
+    """
+    logger.info(f"Computing features race_key={race_key} year={year} round={round_number}")
+ 
+    qualifying_df = _load_qualifying(race_key)
+    results_history = _load_results_history(year, round_number)
+    quali_history = _load_qualifying_history(year, round_number)
+    current_results = _load_current_results(race_key)
+    telemetry_df = _load_telemetry(race_key)
+ 
+    if qualifying_df.empty:
+        logger.error(f"No qualifying data found for race_key={race_key}")
+        return pd.DataFrame()
+ 
+    rows = []
+ 
+    for _, driver_row in qualifying_df.iterrows():
+        driver_code = driver_row["driver_code"]
+        team_id = driver_row["team_id"]
+ 
+        driver_results = results_history[results_history["driver_code"] == driver_code]
+        driver_quali = quali_history[quali_history["driver_code"] == driver_code]
+        team_results = results_history[results_history["team_id"] == team_id]
+        driver_telemetry = telemetry_df[telemetry_df["driver_code"] == driver_code]
+ 
+        # --- Driver features ---
+        avg_finish = _avg_finish(driver_results)
+        avg_quali = _avg_quali(driver_quali)
+        podium_rate = _podium_rate(driver_results)
+        dnf_rate = _dnf_rate(driver_results)
+        wet_score = _wet_weather_score(driver_results)
+        teammate_delta = _teammate_delta(driver_code, team_id, quali_history)
+        tire_mgmt = _tire_management_score(driver_telemetry)
+ 
+        # --- Team features ---
+        constructor_form = _constructor_form(team_results)
+        pitstop_avg = _pitstop_avg(driver_telemetry)
+        reliability = _reliability_score(team_results)
+ 
+        # --- Circuit features ---
+        circuit_id = driver_row["circuit_id"]
+        circuit = CIRCUIT_FEATURES.get(circuit_id, _DEFAULT_CIRCUIT)
+ 
+        # --- Session features ---
+        quali_pos = int(driver_row["position"])
+        pole_time = qualifying_df["best_lap_seconds"].min()
+        driver_time = driver_row.get("best_lap_seconds")
+        quali_delta = (
+            round(float(driver_time) - float(pole_time), 3)
+            if pd.notna(driver_time) and pd.notna(pole_time) and pole_time > 0
+            else None
+        )
+ 
+        # --- Targets (only available after race) ---
+        finish_pos = None
+        is_winner = None
+        is_podium = None
+ 
+        if not current_results.empty:
+            driver_result = current_results[current_results["driver_code"] == driver_code]
+            if not driver_result.empty:
+                fp = int(driver_result.iloc[0]["finish_position"])
+                finish_pos = fp
+                is_winner = 1 if fp == 1 else 0
+                is_podium = 1 if fp <= 3 else 0
+ 
+        rows.append({
+            "race_key": race_key,
+            "driver_code": driver_code,
+            "driver_name": driver_row["driver_name"],
+            "team_id": team_id,
+            "year": year,
+            "round": round_number,
+            "circuit_id": circuit_id,
+            "feature_version": "v1",
+            # driver
+            "avg_finish_last_5": avg_finish,
+            "avg_quali_last_5": avg_quali,
+            "podium_rate": podium_rate,
+            "dnf_rate": dnf_rate,
+            "wet_weather_score": wet_score,
+            "teammate_delta": teammate_delta,
+            "tire_management_score": tire_mgmt,
+            # team
+            "constructor_form": constructor_form,
+            "pitstop_avg": pitstop_avg,
+            "reliability_score": reliability,
+            # circuit
+            "overtaking_difficulty": circuit["overtaking_difficulty"],
+            "tire_deg_factor": circuit["tire_deg_factor"],
+            "safety_car_probability": circuit["safety_car_probability"],
+            # session
+            "qualifying_position": quali_pos,
+            "qualifying_delta_to_pole": quali_delta,
+            # targets
+            "finish_position": finish_pos,
+            "is_winner": is_winner,
+            "is_podium": is_podium,
+        })
+ 
+    df = pd.DataFrame(rows)
+    logger.info(f"Computed {len(df)} feature rows for race_key={race_key}")
+    return df
