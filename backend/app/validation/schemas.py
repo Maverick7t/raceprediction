@@ -59,3 +59,33 @@ ResultsRawSchema = DataFrameSchema(
     strict=False,
     coerce=True,
 )
+
+TelemetryRawSchema = DataFrameSchema(
+    columns={
+        "driver_code": Column(str, Check(lambda s: s.str.len().between(2, 4)), nullable=False),
+        "lap_number": Column(int, Check.greater_than(0), nullable=False),
+        "lap_seconds": Column(
+            float,
+            checks=[Check.greater_than(60.0), Check.less_than(300.0)],
+            nullable=True,
+        ),
+        "stint": Column(int, Check.greater_than(0), nullable=False),
+        "compound": Column(
+            str,
+            checks=Check(
+                lambda s: s.isin(_VALID_COMPOUNDS) | s.isna(),
+                error="invalid compound",
+            ),
+            nullable=True,
+        ),
+        "tyre_life": Column(int, nullable=True),
+        "is_accurate": Column(bool, nullable=True),
+        "year": Column(int, Check.in_range(2018, 2035), nullable=False),
+        "round": Column(int, Check.in_range(1, 25), nullable=False),
+        "race_key": Column(str, nullable=False),
+        "source": Column(str, nullable=False),
+    },
+    strict=False,
+    coerce=True,
+)
+ 
