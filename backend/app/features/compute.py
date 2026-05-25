@@ -191,3 +191,70 @@ def compute_features_for_race(
     df = pd.DataFrame(rows)
     logger.info(f"Computed {len(df)} feature rows for race_key={race_key}")
     return df
+
+
+# ---------------------------------------------------------------------------
+# Data loaders — read from raw tables via SQLAlchemy
+# ---------------------------------------------------------------------------
+ 
+def _load_qualifying(race_key: str) -> pd.DataFrame:
+    with get_session() as session:
+        result = session.execute(text("""
+            SELECT driver_code, driver_name, team_id, circuit_id,
+                   position, best_lap_seconds, year, round
+            FROM qualifying_raw
+            WHERE race_key = :race_key
+            ORDER BY position ASC
+        """), {"race_key": race_key})
+        rows = result.mappings().all()
+    return pd.DataFrame(rows)
+ 
+ 
+def _load_results_history(year: int, round_number: int) -> pd.DataFrame:
+    """Load all results BEFORE this race — no leakage."""
+    with get_session() as session:
+        result = session.execute(text("""
+            SELECT driver_code, team_id, finish_position, points, status, year, round
+            FROM results_raw
+            WHERE (year < :year) OR (year = :year AND round < :round)
+            ORDER BY year ASC, round ASC
+        """), {"year": year, "round": round_number})
+        rows = result.mappings().all()
+    return pd.DataFrame(rows)
+ 
+ 
+def _load_qualifying_history(year: int, round_number: int) -> pd.DataFrame:
+    """Load all qualifying results BEFORE this race."""
+    with get_session() as session:
+        result = session.execute(text("""
+            SELECT driver_code, team_id, position, best_lap_seconds, year, round
+            FROM qualifying_raw
+            WHERE (year < :year) OR (year = :year AND round < :round)
+            ORDER BY year ASC, round ASC
+        """), {"year": year, "round": round_number})
+        rows = result.mappings().all()
+    return pd.DataFrame(rows)
+ 
+ 
+def _load_current_results(race_key: str) -> pd.DataFrame:
+    """Load race results for the current race (only available after Sunday)."""
+    with get_session() as session:
+        result = session.execute(text("""
+            SELECT driver_code, finish_position, status
+            FROM results_raw
+            WHERE race_key = :race_key
+        """), {"race_key": race_key})
+        rows = result.mappings().all()
+    return pd.DataFrame(rows)
+ 
+ 
+def _load_telemetry(race_key: str) -> pd.DataFrame:
+    with get_session() as session:
+        result = session.execute(text("""
+            SELECT driver_code, lap_number, lap_seconds, stint,
+                   compound, tyre_life, is_accurate
+            FROM telemetry_raw
+            WHERE race_key = :race_key
+        """), {"race_key": race_key})
+        rows = result.mappings().all()
+    return pd.DataFrame(rows)
