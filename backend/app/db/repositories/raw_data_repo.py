@@ -135,3 +135,24 @@ class RawDataRepository(SupabaseRepository):
             row["ingested_at"] = datetime.now(timezone.utc).isoformat()
             cleaned.append({k: _to_python_type(v) for k, v in row.items()})
         return cleaned
+    
+
+def _to_python_type(value):
+"""Cast numpy/pandas types to Python native types for JSON serialisation."""
+if value is None:
+    return None
+if isinstance(value, (np.integer,)):
+    return int(value)
+if isinstance(value, (np.floating,)):
+    return None if np.isnan(value) else float(value)
+if isinstance(value, (np.bool_,)):
+    return bool(value)
+if isinstance(value, float) and math.isnan(value):
+    return None
+# pandas NA / NaT
+try:
+    if pd.isna(value):
+        return None
+except (TypeError, ValueError):
+    pass
+return value
