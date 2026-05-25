@@ -60,3 +60,22 @@ def fetch_race_results(year: int, round_number: int) -> pd.DataFrame:
 )
 def fetch_race_telemetry(year: int, round_number: int) -> pd.DataFrame:
     return load_race_telemetry(year, round_number)
+
+@task(
+    name="fetch_driver_standings",
+    retries=3,
+    retry_delay_seconds=exponential_backoff(backoff_factor=2),
+    description="Fetch driver championship standings from Ergast",
+)
+def fetch_driver_standings(year: int, round_number: int) -> pd.DataFrame:
+    return _ergast.get_driver_standings(year, round_number)
+ 
+ 
+@task(
+    name="fetch_constructor_standings",
+    retries=3,
+    retry_delay_seconds=exponential_backoff(backoff_factor=2),
+    description="Fetch constructor championship standings from Ergast",
+)
+def fetch_constructor_standings(year: int, round_number: int) -> pd.DataFrame:
+    return _ergast.get_constructor_standings(year, round_number)
