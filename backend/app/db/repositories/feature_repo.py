@@ -73,3 +73,34 @@ class FeatureRepository:
                 is_podium                = EXCLUDED.is_podium,
                 computed_at              = EXCLUDED.computed_at
         """)
+
+
+        try:
+            with get_session() as session:
+                session.execute(stmt, rows)
+            logger.info(f"Upserted {len(rows)} feature rows")
+            return len(rows)
+        except Exception as e:
+            raise StorageError("features_by_race", str(e)) from e
+ 
+    def get_features_for_race(
+        self, race_key: str, feature_version: str = CURRENT_FEATURE_VERSION
+    ) -> pd.DataFrame:
+        """
+        Read all feature rows for a specific race.
+        Used by the inference engine after qualifying.
+        """
+        with get_session() as session:
+            result = session.execute(text("""
+                SELECT * FROM features_by_race
+                WHERE race_key = :race_key
+                AND feature_version = :feature_version
+                ORDER BY qualifying_position ASC NULLS LAST
+            """), {"race_key": race_key, "feature_version": feature_version})
+            rows = result.mappings().all()
+ 
+        if not rows:
+            logger.warning(f"No features found for race_key={race_key} version={feature_version}")
+            return pd.DataFrame()
+ 
+        return pd.DataFrame(rows)
