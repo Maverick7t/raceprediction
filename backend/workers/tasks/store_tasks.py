@@ -29,3 +29,26 @@ def store_qualifying_raw(df: pd.DataFrame) -> int:
     count = _repo.upsert_qualifying_raw(df)
     logger.info(f"store_qualifying_raw: {count} rows written")
     return count
+
+@task(
+    name="store_results_raw",
+    retries=2,
+    retry_delay_seconds=10,
+    description="Upsert race result rows into results_raw table",
+)
+def store_results_raw(df: pd.DataFrame) -> int:
+    count = _repo.upsert_results_raw(df)
+    logger.info(f"store_results_raw: {count} rows written")
+    return count
+ 
+ 
+@task(
+    name="store_telemetry_raw",
+    retries=2,
+    retry_delay_seconds=10,
+    description="Upsert lap telemetry rows into telemetry_raw table",
+)
+def store_telemetry_raw(df: pd.DataFrame) -> int:
+    count = _repo.upsert_telemetry_raw(df)
+    logger.info(f"store_telemetry_raw: {count} rows written")
+    return count
