@@ -40,3 +40,17 @@ class FeaturesByRace(Base):
     round: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     circuit_id: Mapped[str] = mapped_column(Text, nullable=False)
     feature_version: Mapped[str] = mapped_column(Text, nullable=False, default="v1")
+
+    # --- Driver features ---
+    avg_finish_last_5: Mapped[float | None] = mapped_column(Float)
+    avg_quali_last_5: Mapped[float | None] = mapped_column(Float)
+    podium_rate: Mapped[float | None] = mapped_column(Float)
+    dnf_rate: Mapped[float | None] = mapped_column(Float)
+    wet_weather_score: Mapped[float | None] = mapped_column(Float)
+    teammate_delta: Mapped[float | None] = mapped_column(Float)
+    tire_management_score: Mapped[float | None] = mapped_column(Float)
+ 
+    # --- Team features ---
+    constructor_form: Mapped[float | None] = mapped_column(Float)
+    pitstop_avg: Mapped[float | None] = mapped_column(Float)
+    reliability_score: Mapped[float | None] = mapped_column(Float)
