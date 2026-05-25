@@ -52,7 +52,7 @@ def post_race_flow(year: int, round_number: int) -> dict:
     run_logger.info(f"post_race_flow started year={year} round={round_number}")
 
 
-    # ----------------Step 1: Race results — authoritative from Ergast----------------------------------------------------------------
+# ----------------Step 1: Race results — authoritative from Ergast----------------------------------------------------------------
     results_df = fetch_race_results(year, round_number)
  
     race_key = (
@@ -64,3 +64,17 @@ def post_race_flow(year: int, round_number: int) -> dict:
     validated_results = validate_results(results_df, race_key)
     results_stored = store_results_raw(validated_results)
     run_logger.info(f"Results stored: {results_stored} rows race_key={race_key}")
+
+
+# ------# Step 2: Race telemetry — from FastF1, graceful degradation---------------------------------
+    telemetry_stored = 0
+    try:
+        telemetry_df = fetch_race_telemetry(year, round_number)
+        validated_telemetry = validate_telemetry(telemetry_df, race_key)
+        telemetry_stored = store_telemetry_raw(validated_telemetry)
+        run_logger.info(f"Telemetry stored: {telemetry_stored} rows")
+    except Exception as exc:
+        run_logger.warning(
+            f"Telemetry ingestion failed (non-fatal) — "
+            f"race results are stored, telemetry will be missing. Error: {exc}"
+        )
