@@ -66,3 +66,36 @@ class RawDataRepository:
         """)
  
         return self._execute_batch(df, stmt, "qualifying_raw")
+    def upsert_results(self, df: pd.DataFrame) -> int:
+        """
+        Upsert race result rows.
+        On conflict (race_key, driver_code): update all mutable columns.
+        """
+        if df is None or df.empty:
+            logger.warning("upsert_results called with empty DataFrame")
+            return 0
+ 
+        stmt = text("""
+            INSERT INTO results_raw (
+                race_key, driver_code, driver_id, driver_name,
+                team, team_id, grid_position, finish_position,
+                points, status, year, round, race_name,
+                circuit_id, source, ingested_at
+            ) VALUES (
+                :race_key, :driver_code, :driver_id, :driver_name,
+                :team, :team_id, :grid_position, :finish_position,
+                :points, :status, :year, :round, :race_name,
+                :circuit_id, :source, :ingested_at
+            )
+            ON CONFLICT (race_key, driver_code)
+            DO UPDATE SET
+                finish_position = EXCLUDED.finish_position,
+                grid_position   = EXCLUDED.grid_position,
+                points          = EXCLUDED.points,
+                status          = EXCLUDED.status,
+                team            = EXCLUDED.team,
+                source          = EXCLUDED.source,
+                ingested_at     = EXCLUDED.ingested_at
+        """)
+ 
+        return self._execute_batch(df, stmt, "results_raw")
