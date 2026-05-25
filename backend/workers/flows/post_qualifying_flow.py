@@ -57,3 +57,30 @@ def post_qualifying_flow(year: int, round_number: int) -> dict:
         if not ergast_df.empty
         else f"unknown_{year}_{round_number}"
     )
+
+    # Step 2: FastF1 enriches with lap time detail.
+    # Wrapped in try/except at flow level — FastF1 failure is non-fatal.
+    try:
+        fastf1_df = fetch_qualifying_fastf1(year, round_number)
+ 
+        # Merge: Ergast is the base (has full driver metadata).
+        # FastF1 contributes best_lap_seconds only.
+        lap_time_cols = ["driver_code", "race_key", "best_lap_seconds"]
+        available_cols = [c for c in lap_time_cols if c in fastf1_df.columns]
+ 
+        if "best_lap_seconds" in fastf1_df.columns:
+            merged_df = ergast_df.merge(
+                fastf1_df[available_cols],
+                on=["driver_code", "race_key"],
+                how="left",
+            )
+            run_logger.info("FastF1 lap times merged successfully")
+        else:
+            merged_df = ergast_df
+            run_logger.warning("FastF1 data missing best_lap_seconds column — skipping merge")
+ 
+    except Exception as exc:
+        run_logger.warning(
+            f"FastF1 fetch failed — continuing with Ergast data only. Error: {exc}"
+        )
+        merged_df = ergast_df
