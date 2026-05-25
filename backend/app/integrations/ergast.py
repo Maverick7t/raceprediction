@@ -123,3 +123,39 @@ class ErgastClient:
  
         logger.info(f"Ergast qualifying: {len(rows)} rows year={year} round={round_number}")
         return pd.DataFrame(rows)
+    
+
+    def get_driver_standings(
+        self, year: int, round_number: Optional[int] = None
+    ) -> pd.DataFrame:
+        """
+        Fetch driver championship standings.
+        If round_number is omitted, returns standings after the final round.
+        """
+        path = (
+            f"/{year}/{round_number}/driverStandings.json"
+            if round_number
+            else f"/{year}/driverStandings.json"
+        )
+        data = self._get(path)
+        standings_lists = self._extract_races(data, "StandingsTable", "StandingsLists")
+ 
+        if not standings_lists:
+            return pd.DataFrame()
+ 
+        rows = []
+        for entry in standings_lists[0]["DriverStandings"]:
+            rows.append({
+                "driver_code": entry["Driver"].get("code", entry["Driver"]["driverId"][:3].upper()),
+                "driver_id": entry["Driver"]["driverId"],
+                "driver_name": f"{entry['Driver']['givenName']} {entry['Driver']['familyName']}",
+                "team": entry["Constructors"][0]["name"] if entry["Constructors"] else "",
+                "position": int(entry["position"]),
+                "points": float(entry["points"]),
+                "wins": int(entry["wins"]),
+                "year": year,
+                "round": round_number,
+                "source": "ergast",
+            })
+ 
+        return pd.DataFrame(rows)
