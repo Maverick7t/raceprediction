@@ -159,3 +159,72 @@ class RawDataRepository:
         except Exception as e:
             # Swallowed intentionally — this is audit logging, not critical path
             logger.error(f"validation_failures insert failed: {e}")
+
+
+    # ------------------------------------------------------------------
+    # Internal
+    # ------------------------------------------------------------------
+ 
+    def _execute_batch(self, df: pd.DataFrame, stmt, table: str) -> int:
+        """
+        Execute a parameterised statement in batches of _BATCH_SIZE.
+        Raises StorageError on any batch failure.
+        """
+        rows = self._prepare_rows(df)
+        total = 0
+        num_batches = (len(rows) + _BATCH_SIZE - 1) // _BATCH_SIZE
+ 
+        try:
+            with get_session() as session:
+                for i in range(num_batches):
+                    batch = rows[i * _BATCH_SIZE:(i + 1) * _BATCH_SIZE]
+                    session.execute(stmt, batch)
+                    total += len(batch)
+                    logger.info(
+                        f"Batch {i+1}/{num_batches} → {len(batch)} rows into {table}"
+                    )
+        except StorageError:
+            raise
+        except Exception as e:
+            raise StorageError(table, str(e)) from e
+ 
+        logger.info(f"Total upserted: {total} rows into {table}")
+        return total
+ 
+    @staticmethod
+    def _prepare_rows(df: pd.DataFrame) -> list[dict]:
+        """
+        Convert DataFrame to plain Python dicts.
+        Adds ingested_at timestamp.
+        Casts numpy types to Python native — SQLAlchemy's driver
+        cannot serialise numpy.int64 / numpy.float64.
+        """
+        import math
+        import numpy as np
+ 
+        now = datetime.now(timezone.utc)
+        rows = df.to_dict(orient="records")
+        cleaned = []
+ 
+        for row in rows:
+            row["ingested_at"] = now
+            clean_row = {}
+            for k, v in row.items():
+                if v is None:
+                    clean_row[k] = None
+                elif isinstance(v, np.integer):
+                    clean_row[k] = int(v)
+                elif isinstance(v, np.floating):
+                    clean_row[k] = None if math.isnan(v) else float(v)
+                elif isinstance(v, np.bool_):
+                    clean_row[k] = bool(v)
+                elif isinstance(v, float) and math.isnan(v):
+                    clean_row[k] = None
+                else:
+                    try:
+                        clean_row[k] = None if pd.isna(v) else v
+                    except (TypeError, ValueError):
+                        clean_row[k] = v
+            cleaned.append(clean_row)
+ 
+        return cleaned
