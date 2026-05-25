@@ -89,3 +89,49 @@ class RawDataRepository(SupabaseRepository):
         except Exception as e:
             # Swallowing intentionally — this is audit logging, not critical path
             logger.error(f"validation_failures insert failed: {e}")
+
+
+
+    # ------------------------------------------------------------------
+    # Internal
+    # ------------------------------------------------------------------
+ 
+    def _upsert(self, df: pd.DataFrame, table: str, on_conflict: str) -> int:
+        if df is None or df.empty:
+            logger.warning(f"_upsert called with empty DataFrame for table={table}")
+            return 0
+ 
+        rows = self._prepare_rows(df)
+        total = 0
+        num_batches = math.ceil(len(rows) / _BATCH_SIZE)
+ 
+        for i in range(num_batches):
+            batch = rows[i * _BATCH_SIZE : (i + 1) * _BATCH_SIZE]
+            try:
+                self.client.table(table).upsert(
+                    batch, on_conflict=on_conflict
+                ).execute()
+                total += len(batch)
+                logger.info(
+                    f"Upserted batch {i+1}/{num_batches} "
+                    f"({len(batch)} rows) into {table}"
+                )
+            except Exception as e:
+                raise StorageError(table, f"Batch {i+1} upsert failed: {e}") from e
+ 
+        logger.info(f"Upserted {total} total rows into {table}")
+        return total
+ 
+    @staticmethod
+    def _prepare_rows(df: pd.DataFrame) -> list[dict]:
+        """
+        Convert DataFrame to a list of plain Python dicts.
+        Supabase's JSON serialiser cannot handle numpy scalars (int64, float64),
+        NaT, or pandas NA — all must be cast to Python native types or None.
+        """
+        rows = df.to_dict(orient="records")
+        cleaned = []
+        for row in rows:
+            row["ingested_at"] = datetime.now(timezone.utc).isoformat()
+            cleaned.append({k: _to_python_type(v) for k, v in row.items()})
+        return cleaned
