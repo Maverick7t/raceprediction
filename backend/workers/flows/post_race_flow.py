@@ -78,3 +78,11 @@ def post_race_flow(year: int, round_number: int) -> dict:
             f"Telemetry ingestion failed (non-fatal) — "
             f"race results are stored, telemetry will be missing. Error: {exc}"
         )
+
+
+# ---------Step 3: Pit stops — OpenF1, always non-fatal-------------------------------------
+    pit_df = fetch_pit_stops(year, round_number)
+    if not pit_df.empty:
+        run_logger.info(f"OpenF1 pit stops fetched: {len(pit_df)} rows (not stored in phase 1)")
+    else:
+        run_logger.info("OpenF1 pit stops: no data (non-fatal)")
