@@ -54,3 +54,34 @@ class FeaturesByRace(Base):
     constructor_form: Mapped[float | None] = mapped_column(Float)
     pitstop_avg: Mapped[float | None] = mapped_column(Float)
     reliability_score: Mapped[float | None] = mapped_column(Float)
+
+    # --- Circuit features ---
+    overtaking_difficulty: Mapped[float | None] = mapped_column(Float)
+    tire_deg_factor: Mapped[float | None] = mapped_column(Float)
+    safety_car_probability: Mapped[float | None] = mapped_column(Float)
+ 
+    # --- Session features (available after qualifying) ---
+    qualifying_position: Mapped[int | None] = mapped_column(SmallInteger)
+    qualifying_delta_to_pole: Mapped[float | None] = mapped_column(Float)
+ 
+    # --- Target (filled after race, used for training) ---
+    finish_position: Mapped[int | None] = mapped_column(SmallInteger)
+    is_winner: Mapped[int | None] = mapped_column(SmallInteger)   # 1 or 0
+    is_podium: Mapped[int | None] = mapped_column(SmallInteger)   # 1 or 0
+ 
+    computed_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    )
+ 
+    __table_args__ = (
+        UniqueConstraint(
+            "race_key", "driver_code", "feature_version",
+            name="features_race_driver_version_unique",
+        ),
+        Index("idx_features_race_key", "race_key"),
+        Index("idx_features_driver_year", "driver_code", "year"),
+        Index("idx_features_version", "feature_version"),
+    )
+ 
+    def __repr__(self) -> str:
+        return f"<FeaturesByRace {self.race_key} {self.driver_code} {self.feature_version}>"
