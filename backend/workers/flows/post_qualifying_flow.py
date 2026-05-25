@@ -36,3 +36,24 @@ from workers.tasks.validate_tasks import validate_qualifying
     log_prints=True,
 )
 
+def post_qualifying_flow(year: int, round_number: int) -> dict:
+    """
+    Args:
+        year:         Championship year (e.g. 2025)
+        round_number: Race round number within the season (1-based)
+ 
+    Returns:
+        Dict with race_key and rows_stored for downstream logging.
+    """
+    run_logger = get_run_logger()
+    run_logger.info(f"post_qualifying_flow started year={year} round={round_number}")
+ 
+    # Step 1: Ergast is authoritative for qualifying positions and metadata.
+    # This task raises on failure — no Ergast means no qualifying data.
+    ergast_df = fetch_qualifying_ergast(year, round_number)
+ 
+    race_key = (
+        ergast_df["race_key"].iloc[0]
+        if not ergast_df.empty
+        else f"unknown_{year}_{round_number}"
+    )
