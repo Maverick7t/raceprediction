@@ -190,3 +190,54 @@ class ErgastClient:
             })
  
         return pd.DataFrame(rows)
+    
+
+    # ------------------------------------------------------------------
+    # Internal request machinery
+    # ------------------------------------------------------------------
+ 
+    def _get(self, path: str) -> dict:
+        url = f"{self.base_url}{path}"
+        last_exc: Exception | None = None
+ 
+        for attempt in range(1, _MAX_RETRIES + 1):
+            try:
+                logger.info(f"GET {url} attempt={attempt}")
+                resp = self._session.get(url, timeout=_TIMEOUT)
+ 
+                if resp.status_code == 429:
+                    wait = _BACKOFF_BASE * (2 ** (attempt - 1))
+                    logger.warning(f"Ergast rate limited — waiting {wait}s")
+                    time.sleep(wait)
+                    last_exc = Exception("429 rate limited")
+                    continue
+ 
+                resp.raise_for_status()
+                return resp.json()
+ 
+            except requests.exceptions.Timeout as e:
+                last_exc = e
+                logger.warning(f"Timeout on attempt {attempt}: {url}")
+            except requests.exceptions.HTTPError as e:
+                raise IngestionError(
+                    "ergast", f"HTTP {e.response.status_code}: {url}"
+                ) from e
+            except Exception as e:
+                last_exc = e
+                logger.warning(f"Request error attempt {attempt}: {e}")
+ 
+            if attempt < _MAX_RETRIES:
+                time.sleep(_BACKOFF_BASE * (2 ** (attempt - 1)))
+ 
+        raise IngestionError(
+            "ergast",
+            f"All {_MAX_RETRIES} attempts failed for {url}: {last_exc}",
+        ) from last_exc
+ 
+    @staticmethod
+    def _extract_races(data: dict, table_key: str, list_key: str) -> list:
+        """Safely extract the nested list from an Ergast MRData response."""
+        try:
+            return data["MRData"][table_key][list_key]
+        except (KeyError, TypeError):
+            return []
