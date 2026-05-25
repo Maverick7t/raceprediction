@@ -6,6 +6,8 @@ Integration tests use real Postgres via DATABASE_URL env var.
 """
  
 import os
+import sys
+
 import pytest
 import pandas as pd
  
@@ -15,6 +17,10 @@ from sqlalchemy.orm import sessionmaker
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("LOG_LEVEL", "WARNING")
+
+backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if backend_path not in sys.path:
+    sys.path.insert(0, backend_path)
  
 from app.db.base import Base
 import app.db.models  # noqa — registers all models on Base.metadata
@@ -35,7 +41,7 @@ def engine():
     yield _engine
     _engine.dispose()
  
- @pytest.fixture(scope="function")
+@pytest.fixture(scope="function")
 def session(engine):
     connection = engine.connect()
     transaction = connection.begin()
