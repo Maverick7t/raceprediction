@@ -15,7 +15,7 @@ Cache behaviour:
  
 from pathlib import Path
  
-from backend.app.integrations.ergast import _build_race_key
+from app.integrations.ergast import _build_race_key
 import fastf1
 import pandas as pd
  
