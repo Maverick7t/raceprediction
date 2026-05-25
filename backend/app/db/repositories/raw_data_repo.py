@@ -99,3 +99,63 @@ class RawDataRepository:
         """)
  
         return self._execute_batch(df, stmt, "results_raw")
+    
+    def upsert_telemetry(self, df: pd.DataFrame) -> int:
+        """
+        Upsert telemetry rows.
+        On conflict (race_key, driver_code, lap_number): update lap data.
+        Large tables — batched at 500 rows.
+        """
+        if df is None or df.empty:
+            logger.warning("upsert_telemetry called with empty DataFrame")
+            return 0
+ 
+        stmt = text("""
+            INSERT INTO telemetry_raw (
+                race_key, driver_code, lap_number, lap_seconds,
+                stint, compound, tyre_life, is_accurate,
+                year, round, source, ingested_at
+            ) VALUES (
+                :race_key, :driver_code, :lap_number, :lap_seconds,
+                :stint, :compound, :tyre_life, :is_accurate,
+                :year, :round, :source, :ingested_at
+            )
+            ON CONFLICT (race_key, driver_code, lap_number)
+            DO UPDATE SET
+                lap_seconds = EXCLUDED.lap_seconds,
+                compound    = EXCLUDED.compound,
+                tyre_life   = EXCLUDED.tyre_life,
+                is_accurate = EXCLUDED.is_accurate,
+                ingested_at = EXCLUDED.ingested_at
+        """)
+ 
+        return self._execute_batch(df, stmt, "telemetry_raw")
+ 
+    def insert_validation_failure(
+        self,
+        table: str,
+        race_key: str,
+        failure_reason: str,
+        raw_data: dict | None = None,
+    ) -> None:
+        """
+        Append a validation failure to the audit log.
+        Never raises — audit logging must not crash the pipeline.
+        """
+        try:
+            with get_session() as session:
+                session.execute(text("""
+                    INSERT INTO validation_failures
+                        (source_table, race_key, failure_reason, raw_data, occurred_at)
+                    VALUES
+                        (:source_table, :race_key, :failure_reason, :raw_data, :occurred_at)
+                """), {
+                    "source_table": table,
+                    "race_key": race_key,
+                    "failure_reason": failure_reason,
+                    "raw_data": raw_data,
+                    "occurred_at": datetime.now(timezone.utc),
+                })
+        except Exception as e:
+            # Swallowed intentionally — this is audit logging, not critical path
+            logger.error(f"validation_failures insert failed: {e}")
