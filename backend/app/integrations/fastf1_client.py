@@ -15,6 +15,7 @@ Cache behaviour:
  
 from pathlib import Path
  
+from backend.app.integrations.ergast import _build_race_key
 import fastf1
 import pandas as pd
  
@@ -27,3 +28,62 @@ logger = get_logger(__name__)
 # Configure FastF1 cache once at import time
 Path(config.FASTF1_CACHE_DIR).mkdir(parents=True, exist_ok=True)
 fastf1.Cache.enable_cache(config.FASTF1_CACHE_DIR)
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+ 
+def load_qualifying_session(year: int, round_number: int) -> pd.DataFrame:
+    """
+    Load qualifying session from FastF1. Returns one row per driver
+    containing their best lap time in seconds and computed grid position.
+ 
+    Raises IngestionError if the session cannot be loaded or contains no laps.
+    """
+    logger.info(f"FastF1: loading qualifying year={year} round={round_number}")
+ 
+    try:
+        session = fastf1.get_session(year, round_number, "Q")
+        # Load laps only — telemetry/weather would slow this down significantly
+        session.load(laps=True, telemetry=False, weather=False, messages=False)
+    except Exception as e:
+        raise IngestionError("fastf1", f"Session load failed: {e}") from e
+ 
+    laps = session.laps
+ 
+    if laps is None or laps.empty:
+        raise IngestionError(
+            "fastf1",
+            f"No lap data in qualifying session year={year} round={round_number}",
+        )
+ 
+    # Keep only accurate laps (no pit lane exits, VSC outlaps etc.)
+    valid_laps = laps[laps["IsAccurate"] == True].copy()
+    if valid_laps.empty:
+        # Fall back to all laps if IsAccurate filters everything out
+        valid_laps = laps.copy()
+        logger.warning("IsAccurate filtered all laps — using unfiltered set")
+ 
+    best = (
+        valid_laps.groupby("Driver")["LapTime"]
+        .min()
+        .reset_index()
+        .rename(columns={"Driver": "driver_code", "LapTime": "best_lap_time"})
+    )
+ 
+    best["best_lap_seconds"] = best["best_lap_time"].dt.total_seconds()
+    best["position"] = best["best_lap_seconds"].rank(method="min").astype(int)
+ 
+    race_key = _build_race_key(session.event["EventName"], year)
+    best["race_key"] = race_key
+    best["session_name"] = session.event["EventName"]
+    best["circuit"] = session.event["Location"]
+    best["year"] = year
+    best["round"] = round_number
+    best["source"] = "fastf1"
+ 
+    best = best.drop(columns=["best_lap_time"])
+ 
+    logger.info(f"FastF1 qualifying: {len(best)} drivers loaded race_key={race_key}")
+    return best
