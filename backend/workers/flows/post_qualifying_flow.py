@@ -84,3 +84,30 @@ def post_qualifying_flow(year: int, round_number: int) -> dict:
             f"FastF1 fetch failed — continuing with Ergast data only. Error: {exc}"
         )
         merged_df = ergast_df
+
+    # Step 3: Validate. Invalid rows go to validation_failures audit table.
+    validated_df = validate_qualifying(merged_df, race_key)
+ 
+    # Step 4: Upsert to Supabase.
+    rows_stored = store_qualifying_raw(validated_df)
+ 
+    run_logger.info(
+        f"post_qualifying_flow complete race_key={race_key} rows_stored={rows_stored}"
+    )
+ 
+    return {
+        "race_key": race_key,
+        "rows_stored": rows_stored,
+        "year": year,
+        "round": round_number,
+    }
+ 
+ 
+# Allow direct invocation for local testing:
+#   python -m workers.flows.post_qualifying_flow
+if __name__ == "__main__":
+    import sys
+    year = int(sys.argv[1]) if len(sys.argv) > 1 else 2024
+    round_num = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+    result = post_qualifying_flow(year, round_num)
+    print(result)
