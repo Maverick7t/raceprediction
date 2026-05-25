@@ -8,9 +8,12 @@ WHEN TO RUN:
 """
  
 import pandas as pd
+import numpy as np
 import pandera as pa
 import pytest
+from sqlalchemy import text
  
+from app.db.repositories.raw_data_repo import RawDataRepository
 from app.validation.schemas import QualifyingRawSchema, ResultsRawSchema, TelemetryRawSchema
  
  
