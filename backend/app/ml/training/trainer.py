@@ -99,4 +99,37 @@ def retrain_from_supabase(
         )
  
     logger.info(f"Loaded {len(df)} training rows")
+
+    # ------------------------------------------------------------------
+    # Step 2: Encode categoricals + fill nulls
+    # ------------------------------------------------------------------
+    df, encoders = _encode_and_clean(df)
  
+    # ------------------------------------------------------------------
+    # Step 3: Time-based train/validation split
+    # ------------------------------------------------------------------
+    df = df.sort_values(["year", "round"]).reset_index(drop=True)
+ 
+    # Get the last VALIDATION_RACES unique (year, round) combinations
+    unique_races = df[["year", "round"]].drop_duplicates().tail(VALIDATION_RACES)
+    val_mask = df.set_index(["year", "round"]).index.isin(
+        unique_races.set_index(["year", "round"]).index
+    )
+ 
+    train_df = df[~val_mask].copy()
+    val_df = df[val_mask].copy()
+ 
+    logger.info(
+        f"Split: {len(train_df)} train rows, {len(val_df)} val rows "
+        f"({VALIDATION_RACES} validation races)"
+    )
+ 
+    all_feature_cols = FEATURE_COLUMNS + [f"{c}_encoded" for c in CATEGORICAL_COLUMNS]
+    available_cols = [c for c in all_feature_cols if c in train_df.columns]
+ 
+    X_train = train_df[available_cols]
+    X_val = val_df[available_cols]
+    y_winner_train = train_df["is_winner"]
+    y_winner_val = val_df["is_winner"]
+    y_podium_train = train_df["is_podium"]
+    y_podium_val = val_df["is_podium"]
