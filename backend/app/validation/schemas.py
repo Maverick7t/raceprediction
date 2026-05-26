@@ -26,6 +26,7 @@ QualifyingRawSchema = DataFrameSchema(
             float,
             checks=[Check.greater_than(60.0), Check.less_than(200.0)],
             nullable=True,
+            required=False,
         ),
         "year": Column(int, Check.in_range(2018, 2035), nullable=False),
         "round": Column(int, Check.in_range(1, 25), nullable=False),
