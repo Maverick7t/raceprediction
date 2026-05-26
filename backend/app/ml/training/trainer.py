@@ -293,3 +293,34 @@ def _evaluate(
         "winner_top3_accuracy": round(winner_top3 / max(total_races, 1), 4),
         "podium_accuracy": round(podium_accuracy, 4),
     }
+
+
+def _register_mlflow_run(
+    experiment_name: str,
+    metrics: dict,
+    metadata: dict,
+    winner_model,
+    podium_model,
+) -> str:
+    """Log the training run to MLflow. Returns the run_id."""
+    try:
+        mlflow.set_experiment(experiment_name)
+        with mlflow.start_run() as run:
+            mlflow.log_params({
+                "feature_version": metadata["feature_version"],
+                "from_year": metadata["training_window"]["from_year"],
+                "training_rows": metrics["training_rows"],
+                "validation_races": metrics["validation_races"],
+                "n_feature_columns": len(metadata["feature_columns"]),
+            })
+            mlflow.log_metrics({
+                "winner_exact_accuracy": metrics["winner_exact_accuracy"],
+                "winner_top3_accuracy": metrics["winner_top3_accuracy"],
+                "podium_accuracy": metrics["podium_accuracy"],
+            })
+            mlflow.xgboost.log_model(winner_model, "winner_model")
+            mlflow.xgboost.log_model(podium_model, "podium_model")
+            return run.info.run_id
+    except Exception as e:
+        logger.error(f"MLflow registration failed (non-fatal): {e}")
+        return "mlflow_unavailable"
