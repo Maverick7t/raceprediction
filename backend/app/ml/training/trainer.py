@@ -242,3 +242,54 @@ def _train_xgboost(X: pd.DataFrame, y: pd.Series, label: str) -> XGBClassifier:
     model.fit(X, y)
     logger.info(f"{label} model trained on {len(X)} rows")
     return model
+
+def _evaluate(
+    winner_model: XGBClassifier,
+    podium_model: XGBClassifier,
+    X_val: pd.DataFrame,
+    y_winner_val: pd.Series,
+    y_podium_val: pd.Series,
+    val_df: pd.DataFrame,
+) -> dict:
+    """
+    Evaluate both models on the validation set.
+ 
+    Metrics:
+      winner_exact_accuracy  — fraction of races where predicted winner = actual winner
+      winner_top3_accuracy   — fraction of races where actual winner is in top-3 predicted
+      podium_accuracy        — fraction of podium predictions correct across all drivers
+    """
+    winner_probs = winner_model.predict_proba(X_val)[:, 1]
+    podium_probs = podium_model.predict_proba(X_val)[:, 1]
+ 
+    val_df = val_df.copy()
+    val_df["winner_prob"] = winner_probs
+    val_df["podium_prob"] = podium_probs
+ 
+    winner_exact = 0
+    winner_top3 = 0
+    total_races = 0
+ 
+    for (year, round_num), race in val_df.groupby(["year", "round"]):
+        actual_winner = race[race["is_winner"] == 1]
+        if actual_winner.empty:
+            continue
+ 
+        predicted_top3 = race.nlargest(3, "winner_prob")["driver_code"].tolist()
+        predicted_winner = race.nlargest(1, "winner_prob")["driver_code"].iloc[0]
+        actual_winner_code = actual_winner["driver_code"].iloc[0]
+ 
+        if predicted_winner == actual_winner_code:
+            winner_exact += 1
+        if actual_winner_code in predicted_top3:
+            winner_top3 += 1
+        total_races += 1
+ 
+    podium_preds = (podium_probs >= 0.5).astype(int)
+    podium_accuracy = float((podium_preds == y_podium_val.values).mean())
+ 
+    return {
+        "winner_exact_accuracy": round(winner_exact / max(total_races, 1), 4),
+        "winner_top3_accuracy": round(winner_top3 / max(total_races, 1), 4),
+        "podium_accuracy": round(podium_accuracy, 4),
+    }
