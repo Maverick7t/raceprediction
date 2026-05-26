@@ -41,6 +41,10 @@ MAX_ROUNDS = 24
 # Delay between Ergast requests to avoid rate limiting
 REQUEST_DELAY = 1.5  # seconds
 
+OPTIONAL_QUALI_COLUMNS = {
+    "best_lap_seconds": None,
+}
+
 def backfill(from_year: int = 2018, to_year: int = 2024) -> None:
     logger.info(f"Backfill started from_year={from_year} to_year={to_year}")
  
@@ -70,6 +74,10 @@ def backfill(from_year: int = 2018, to_year: int = 2024) -> None:
                 # --- Qualifying ---
                 time.sleep(REQUEST_DELAY)
                 quali_df = _ergast.get_qualifying_results(year, round_number)
+
+                for col, default in OPTIONAL_QUALI_COLUMNS.items():
+                    if col not in quali_df.columns:
+                        quali_df[col] = default
  
                 if quali_df.empty:
                     logger.info(f"No qualifying data for {year} R{round_number} — end of season")
