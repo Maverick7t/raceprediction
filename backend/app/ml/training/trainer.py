@@ -44,16 +44,10 @@ FEATURE_COLUMNS = [
     "avg_quali_last_5",
     "podium_rate",
     "dnf_rate",
-    "wet_weather_score",
     "teammate_delta",
-    "tire_management_score",
     "constructor_form",
     "reliability_score",
-    "overtaking_difficulty",
-    "tire_deg_factor",
-    "safety_car_probability",
     "qualifying_position",
-    "qualifying_delta_to_pole",
 ]
 
 # Categorical columns that need label encoding
@@ -128,6 +122,13 @@ def retrain_from_supabase(
  
     all_feature_cols = FEATURE_COLUMNS + [f"{c}_encoded" for c in CATEGORICAL_COLUMNS]
     available_cols = [c for c in all_feature_cols if c in train_df.columns]
+
+    raw_categoricals_in_features = [c for c in CATEGORICAL_COLUMNS if c in available_cols]
+    if raw_categoricals_in_features:
+        raise ValueError(
+            "Raw categorical columns must not be used as model features; "
+            f"use *_encoded instead. Found: {raw_categoricals_in_features}"
+        )
  
     X_train = train_df[available_cols]
     X_val = val_df[available_cols]
@@ -166,6 +167,15 @@ def retrain_from_supabase(
         "training_dataset_hash": training_dataset_hash,
         "feature_columns": available_cols,
         "categorical_columns": CATEGORICAL_COLUMNS,
+        "categorical_encoding": {
+            "method": "LabelEncoder",
+            "encoded_columns": [f"{c}_encoded" for c in CATEGORICAL_COLUMNS],
+            "note": (
+                "Encoded categorical IDs are nominal (no ordinal meaning). "
+                "Do not interpret higher/lower encoded values as better/worse; "
+                "feature importance for *_encoded means the category identity matters, not the magnitude."
+            ),
+        },
         "encoder_classes": {
             col: enc.classes_.tolist()
             for col, enc in encoders.items()
@@ -185,6 +195,8 @@ def retrain_from_supabase(
     run_id = _register_mlflow_run(
         mlflow_experiment, metrics, metadata,
         winner_model, podium_model,
+        X_train=X_train,
+        available_cols=available_cols,
     )
     metrics["run_id"] = run_id
  
@@ -289,14 +301,39 @@ def _evaluate(
     }
 
 
+def _log_feature_importance(model, feature_names: list, filename: str) -> None:
+    """Log feature importance for a trained XGBoost model to MLflow as a CSV artifact."""
+    importance_df = pd.DataFrame({
+        "feature": feature_names,
+        "importance": model.feature_importances_
+    }).sort_values("importance", ascending=False)
+    
+    csv_path = MODELS_DIR / filename
+    importance_df.to_csv(csv_path, index=False)
+    mlflow.log_artifact(str(csv_path))
+    logger.info(f"Logged feature importance to {filename}")
+
+
 def _register_mlflow_run(
     experiment_name: str,
     metrics: dict,
     metadata: dict,
     winner_model,
     podium_model,
+    X_train: pd.DataFrame = None,
+    available_cols: list = None,
 ) -> str:
-    """Log the training run to MLflow. Returns the run_id."""
+    """Log the training run to MLflow. Returns the run_id.
+    
+    Args:
+        experiment_name: MLflow experiment name
+        metrics: Evaluation metrics dict
+        metadata: Training metadata dict
+        winner_model: Trained winner XGBoost classifier
+        podium_model: Trained podium XGBoost classifier
+        X_train: Training feature matrix for input example
+        available_cols: List of feature column names
+    """
     try:
         mlflow.set_experiment(experiment_name)
         with mlflow.start_run() as run:
@@ -304,6 +341,8 @@ def _register_mlflow_run(
                 "feature_version": metadata["feature_version"],
                 "data_cutoff_timestamp": metadata.get("data_cutoff_timestamp", "unknown"),
                 "training_dataset_hash": metadata.get("training_dataset_hash", "unknown"),
+                "categorical_encoding": "LabelEncoder",
+                "categorical_columns": ",".join(metadata.get("categorical_columns", [])),
                 "from_year": metadata["training_window"]["from_year"],
                 "training_rows": metrics["training_rows"],
                 "validation_races": metrics["validation_races"],
@@ -314,8 +353,24 @@ def _register_mlflow_run(
                 "winner_top3_accuracy": metrics["winner_top3_accuracy"],
                 "podium_accuracy": metrics["podium_accuracy"],
             })
-            mlflow.xgboost.log_model(winner_model, "winner_model")
-            mlflow.xgboost.log_model(podium_model, "podium_model")
+            
+            # Log feature importance for both models
+            if available_cols:
+                _log_feature_importance(winner_model, available_cols, "winner_feature_importance.csv")
+                _log_feature_importance(podium_model, available_cols, "podium_feature_importance.csv")
+            
+            # Log models with input examples so MLflow can infer signature
+            input_example = X_train.iloc[:5] if X_train is not None else None
+            mlflow.xgboost.log_model(
+                winner_model,
+                artifact_path="winner_model",
+                input_example=input_example
+            )
+            mlflow.xgboost.log_model(
+                podium_model,
+                artifact_path="podium_model",
+                input_example=input_example
+            )
             return run.info.run_id
     except Exception as e:
         logger.error(f"MLflow registration failed (non-fatal): {e}")
