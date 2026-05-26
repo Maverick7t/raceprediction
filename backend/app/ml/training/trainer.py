@@ -194,3 +194,30 @@ def retrain_from_supabase(
  
     logger.info(f"Retraining complete run_id={run_id}")
     return metrics
+
+
+    # ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+ 
+def _encode_and_clean(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
+    """
+    Label-encode categorical columns and fill nulls with column medians.
+    Returns the encoded DataFrame and the fitted encoders dict.
+    """
+    encoders = {}
+    df = df.copy()
+ 
+    for col in CATEGORICAL_COLUMNS:
+        if col in df.columns:
+            enc = LabelEncoder()
+            df[f"{col}_encoded"] = enc.fit_transform(df[col].fillna("unknown"))
+            encoders[col] = enc
+ 
+    # Fill numeric nulls with column median
+    for col in FEATURE_COLUMNS:
+        if col in df.columns:
+            median = df[col].median()
+            df[col] = df[col].fillna(median if pd.notna(median) else 0.0)
+ 
+    return df, encoders
