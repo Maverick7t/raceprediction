@@ -101,3 +101,51 @@ def sample_training_df():
             "pitstop_avg": None,
         })
     return pd.DataFrame(rows)
+
+# ---------------------------------------------------------------------------
+# Promotion logic
+# ---------------------------------------------------------------------------
+ 
+class TestShouldPromote:
+ 
+    def test_no_production_model_always_promotes(self, strong_metrics):
+        with patch("app.ml.training.evaluator._get_production_metrics", return_value=None):
+            promote, reason = should_promote(strong_metrics)
+        assert promote is True
+        assert "No production model" in reason
+ 
+    def test_below_minimum_threshold_never_promotes(self, weak_metrics):
+        with patch("app.ml.training.evaluator._get_production_metrics", return_value=None):
+            promote, reason = should_promote(weak_metrics)
+        assert promote is False
+        assert "minimum threshold" in reason
+ 
+    def test_beats_production_on_2_metrics_promotes(self, strong_metrics, production_metrics):
+        with patch("app.ml.training.evaluator._get_production_metrics", return_value=production_metrics):
+            promote, reason = should_promote(strong_metrics)
+        assert promote is True
+ 
+    def test_marginal_improvement_does_not_promote(self, production_metrics):
+        """Improvement below MIN_IMPROVEMENT on all metrics → no promotion."""
+        marginal = {
+            "winner_exact_accuracy": production_metrics["winner_exact_accuracy"] + 0.001,
+            "winner_top3_accuracy": production_metrics["winner_top3_accuracy"] + 0.001,
+            "podium_accuracy": production_metrics["podium_accuracy"] + 0.001,
+            "run_id": "marginal_run",
+        }
+        with patch("app.ml.training.evaluator._get_production_metrics", return_value=production_metrics):
+            promote, reason = should_promote(marginal)
+        assert promote is False
+ 
+    def test_promotion_requires_min_2_metrics(self, production_metrics):
+        """Beats production on only 1 metric → no promotion."""
+        one_metric = {
+            "winner_exact_accuracy": production_metrics["winner_exact_accuracy"] + 0.10,  # beats
+            "winner_top3_accuracy": production_metrics["winner_top3_accuracy"] - 0.05,    # worse
+            "podium_accuracy": production_metrics["podium_accuracy"] - 0.05,              # worse
+            "run_id": "one_metric_run",
+        }
+        with patch("app.ml.training.evaluator._get_production_metrics", return_value=production_metrics):
+            promote, reason = should_promote(one_metric)
+        assert promote is False
+ 
