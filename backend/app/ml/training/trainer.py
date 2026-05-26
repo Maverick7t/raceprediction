@@ -156,3 +156,28 @@ def retrain_from_supabase(
     metrics["validation_races"] = VALIDATION_RACES
  
     logger.info(f"Evaluation: {metrics}")
+
+
+    # ------------------------------------------------------------------
+    # Step 6: Save artifacts
+    # ------------------------------------------------------------------
+    winner_model.save_model(str(MODELS_DIR / "xgb_winner.json"))
+    podium_model.save_model(str(MODELS_DIR / "xgb_podium.json"))
+ 
+    metadata = {
+        "feature_version": feature_version,
+        "feature_columns": available_cols,
+        "categorical_columns": CATEGORICAL_COLUMNS,
+        "encoder_classes": {
+            col: enc.classes_.tolist()
+            for col, enc in encoders.items()
+        },
+        "training_window": {"from_year": from_year},
+        "trained_at": datetime.now(timezone.utc).isoformat(),
+        "metrics": metrics,
+    }
+ 
+    with open(MODELS_DIR / "metadata.json", "w") as f:
+        json.dump(metadata, f, indent=2)
+ 
+    logger.info(f"Artifacts saved to {MODELS_DIR}")
