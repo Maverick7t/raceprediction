@@ -136,3 +136,28 @@ def should_retrain() -> bool:
         )
         logger.warning(f"NO PROMOTE: {reason}")
         return False, reason
+    
+    def promote_model(new_metrics: dict, run_id: str) -> None:
+    """
+    Write new model as production by updating metadata.json with
+    a 'production' flag and the promotion timestamp.
+    The actual model files (xgb_winner.json, xgb_podium.json) are
+    already written by trainer.py — promotion just updates the metadata.
+    """
+    metadata_path = MODELS_DIR / "metadata.json"
+ 
+    if not metadata_path.exists():
+        logger.error("Cannot promote — metadata.json not found")
+        return
+ 
+    with open(metadata_path) as f:
+        metadata = json.load(f)
+ 
+    metadata["is_production"] = True
+    metadata["promoted_run_id"] = run_id
+    metadata["promoted_at"] = _now_iso()
+ 
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f, indent=2)
+ 
+    logger.info(f"Model promoted to production run_id={run_id}")
