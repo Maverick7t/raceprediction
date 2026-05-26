@@ -36,6 +36,10 @@ logger = get_logger(__name__)
  
 MODELS_DIR = Path(os.environ.get("MODELS_DIR", "models"))
 MODELS_DIR.mkdir(exist_ok=True)
+
+# Stable benchmark identifier for this exact Phase 3 baseline.
+# Treat this as immutable: bump only when you intentionally change the baseline definition.
+MODEL_VERSION = "baseline_v1"
  
 # Feature columns the model trains on
 # Changing this list = bump CURRENT_FEATURE_VERSION in feature_repo.py
@@ -140,10 +144,14 @@ def retrain_from_supabase(
 
     # -----------Step 4: Train models---------------------------------------
     logger.info("Training winner model...")
-    winner_model = _train_xgboost(X_train, y_winner_train, label="winner")
+    winner_scale_pos_weight = float((y_winner_train == 0).sum()) / max(float((y_winner_train == 1).sum()), 1)
+    winner_params = _xgb_params(scale_pos_weight=winner_scale_pos_weight)
+    winner_model = _train_xgboost(X_train, y_winner_train, label="winner", params=winner_params)
  
     logger.info("Training podium model...")
-    podium_model = _train_xgboost(X_train, y_podium_train, label="podium")
+    podium_scale_pos_weight = float((y_podium_train == 0).sum()) / max(float((y_podium_train == 1).sum()), 1)
+    podium_params = _xgb_params(scale_pos_weight=podium_scale_pos_weight)
+    podium_model = _train_xgboost(X_train, y_podium_train, label="podium", params=podium_params)
  
     # -----------Step 5: Evaluate-------------------------------------------------------
     metrics = _evaluate(
@@ -162,10 +170,12 @@ def retrain_from_supabase(
     podium_model.save_model(str(MODELS_DIR / "xgb_podium.json"))
  
     metadata = {
+        "model_version": MODEL_VERSION,
         "feature_version": feature_version,
         "data_cutoff_timestamp": data_cutoff_timestamp,
         "training_dataset_hash": training_dataset_hash,
         "feature_columns": available_cols,
+        "base_feature_columns": FEATURE_COLUMNS,
         "categorical_columns": CATEGORICAL_COLUMNS,
         "categorical_encoding": {
             "method": "LabelEncoder",
@@ -181,6 +191,15 @@ def retrain_from_supabase(
             for col, enc in encoders.items()
         },
         "training_window": {"from_year": from_year},
+        "training_years": {
+            "train_year_min": int(train_df["year"].min()) if not train_df.empty else None,
+            "train_year_max": int(train_df["year"].max()) if not train_df.empty else None,
+            "val_year": current_year,
+        },
+        "hyperparameters": {
+            "winner": winner_params,
+            "podium": podium_params,
+        },
         "trained_at": datetime.now(timezone.utc).isoformat(),
         "metrics": metrics,
     }
@@ -229,22 +248,24 @@ def _encode_and_clean(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     return df, encoders
 
 
-def _train_xgboost(X: pd.DataFrame, y: pd.Series, label: str) -> XGBClassifier:
+def _xgb_params(scale_pos_weight: float) -> dict:
+    return {
+        "n_estimators": 200,
+        "max_depth": 4,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "scale_pos_weight": float(scale_pos_weight),
+        "use_label_encoder": False,
+        "eval_metric": "logloss",
+        "random_state": 42,
+        "verbosity": 0,
+    }
+
+
+def _train_xgboost(X: pd.DataFrame, y: pd.Series, label: str, params: dict) -> XGBClassifier:
     """Train a single XGBoost binary classifier."""
-    scale_pos_weight = float((y == 0).sum()) / max(float((y == 1).sum()), 1)
- 
-    model = XGBClassifier(
-        n_estimators=200,
-        max_depth=4,
-        learning_rate=0.05,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        scale_pos_weight=scale_pos_weight,  # handle class imbalance
-        use_label_encoder=False,
-        eval_metric="logloss",
-        random_state=42,
-        verbosity=0,
-    )
+    model = XGBClassifier(**params)
     model.fit(X, y)
     logger.info(f"{label} model trained on {len(X)} rows")
     return model
@@ -338,15 +359,31 @@ def _register_mlflow_run(
         mlflow.set_experiment(experiment_name)
         with mlflow.start_run() as run:
             mlflow.log_params({
+                "model_version": metadata.get("model_version", "unknown"),
                 "feature_version": metadata["feature_version"],
                 "data_cutoff_timestamp": metadata.get("data_cutoff_timestamp", "unknown"),
                 "training_dataset_hash": metadata.get("training_dataset_hash", "unknown"),
                 "categorical_encoding": "LabelEncoder",
                 "categorical_columns": ",".join(metadata.get("categorical_columns", [])),
+                "base_feature_columns": ",".join(metadata.get("base_feature_columns", [])),
+                "model_feature_columns": ",".join(metadata.get("feature_columns", [])),
                 "from_year": metadata["training_window"]["from_year"],
+                "train_year_min": (metadata.get("training_years") or {}).get("train_year_min"),
+                "train_year_max": (metadata.get("training_years") or {}).get("train_year_max"),
+                "val_year": (metadata.get("training_years") or {}).get("val_year"),
+                "xgb_n_estimators": (metadata.get("hyperparameters") or {}).get("winner", {}).get("n_estimators"),
+                "xgb_max_depth": (metadata.get("hyperparameters") or {}).get("winner", {}).get("max_depth"),
+                "xgb_learning_rate": (metadata.get("hyperparameters") or {}).get("winner", {}).get("learning_rate"),
+                "xgb_subsample": (metadata.get("hyperparameters") or {}).get("winner", {}).get("subsample"),
+                "xgb_colsample_bytree": (metadata.get("hyperparameters") or {}).get("winner", {}).get("colsample_bytree"),
+                "winner_scale_pos_weight": (metadata.get("hyperparameters") or {}).get("winner", {}).get("scale_pos_weight"),
+                "podium_scale_pos_weight": (metadata.get("hyperparameters") or {}).get("podium", {}).get("scale_pos_weight"),
                 "training_rows": metrics["training_rows"],
                 "validation_races": metrics["validation_races"],
                 "n_feature_columns": len(metadata["feature_columns"]),
+                "snapshot_winner_exact_accuracy": metrics.get("winner_exact_accuracy"),
+                "snapshot_winner_top3_accuracy": metrics.get("winner_top3_accuracy"),
+                "snapshot_podium_accuracy": metrics.get("podium_accuracy"),
             })
             mlflow.log_metrics({
                 "winner_exact_accuracy": metrics["winner_exact_accuracy"],
