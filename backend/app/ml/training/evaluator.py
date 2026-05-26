@@ -161,3 +161,39 @@ def should_retrain() -> bool:
         json.dump(metadata, f, indent=2)
  
     logger.info(f"Model promoted to production run_id={run_id}")
+
+    # ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+ 
+def _get_last_trained_at() -> str | None:
+    """Read trained_at from models/metadata.json. Returns None if missing."""
+    metadata_path = MODELS_DIR / "metadata.json"
+    if not metadata_path.exists():
+        return None
+    try:
+        with open(metadata_path) as f:
+            metadata = json.load(f)
+        return metadata.get("trained_at")
+    except Exception as e:
+        logger.error(f"Could not read metadata.json: {e}")
+        return None
+ 
+ 
+def _get_production_metrics() -> dict | None:
+    """Read metrics from the current production metadata.json."""
+    metadata_path = MODELS_DIR / "metadata.json"
+    if not metadata_path.exists():
+        return None
+    try:
+        with open(metadata_path) as f:
+            metadata = json.load(f)
+        return metadata.get("metrics")
+    except Exception as e:
+        logger.error(f"Could not read production metrics: {e}")
+        return None
+ 
+ 
+def _now_iso() -> str:
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc).isoformat()
