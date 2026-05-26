@@ -36,7 +36,7 @@ from app.features.compute import (
 def driver_results_5():
     """5 races of clean results — P1, P2, P3, P4, P5."""
     return pd.DataFrame([
-        {"driver_code": "VER", "team_id": "red_bull", "finish_position": 1, "points": 25.0, "status": "Finished", "year": 2024, "round": i}
+        {"driver_code": "VER", "team_id": "red_bull", "finish_position": i, "points": 25.0, "status": "Finished", "year": 2024, "round": i}
         for i in range(1, 6)
     ])
  
