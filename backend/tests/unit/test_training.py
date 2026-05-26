@@ -25,3 +25,79 @@ from app.ml.training.trainer import (
     FEATURE_COLUMNS,
     CATEGORICAL_COLUMNS,
 )
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+ 
+@pytest.fixture
+def strong_metrics():
+    """Metrics that clearly beat production."""
+    return {
+        "winner_exact_accuracy": 0.35,
+        "winner_top3_accuracy": 0.70,
+        "podium_accuracy": 0.75,
+        "training_rows": 500,
+        "validation_races": 10,
+        "run_id": "test_run_001",
+    }
+ 
+ 
+@pytest.fixture
+def weak_metrics():
+    """Metrics below minimum thresholds."""
+    return {
+        "winner_exact_accuracy": 0.05,
+        "winner_top3_accuracy": 0.20,
+        "podium_accuracy": 0.40,
+        "training_rows": 50,
+        "validation_races": 5,
+        "run_id": "test_run_002",
+    }
+ 
+ 
+@pytest.fixture
+def production_metrics():
+    return {
+        "winner_exact_accuracy": 0.28,
+        "winner_top3_accuracy": 0.55,
+        "podium_accuracy": 0.65,
+    }
+ 
+ 
+@pytest.fixture
+def sample_training_df():
+    """Minimal training DataFrame with all required columns."""
+    np.random.seed(42)
+    n = 100
+    rows = []
+    for i in range(n):
+        rows.append({
+            "race_key": f"race_{i % 20}",
+            "driver_code": np.random.choice(["VER", "LEC", "HAM", "SAI", "NOR"]),
+            "driver_name": "Test Driver",
+            "team_id": np.random.choice(["red_bull", "ferrari", "mercedes"]),
+            "circuit_id": np.random.choice(["bahrain", "monaco", "silverstone"]),
+            "year": 2023 if i < 80 else 2024,
+            "round": (i % 20) + 1,
+            "feature_version": "v1",
+            "avg_finish_last_5": np.random.uniform(1, 20),
+            "avg_quali_last_5": np.random.uniform(1, 20),
+            "podium_rate": np.random.uniform(0, 1),
+            "dnf_rate": np.random.uniform(0, 0.3),
+            "wet_weather_score": 5.0,
+            "teammate_delta": np.random.uniform(-3, 3),
+            "tire_management_score": np.random.uniform(0.95, 1.1),
+            "constructor_form": np.random.uniform(10, 50),
+            "reliability_score": np.random.uniform(0.7, 1.0),
+            "overtaking_difficulty": np.random.uniform(2, 9),
+            "tire_deg_factor": np.random.uniform(2, 8),
+            "safety_car_probability": np.random.uniform(0.2, 0.6),
+            "qualifying_position": np.random.randint(1, 21),
+            "qualifying_delta_to_pole": np.random.uniform(0, 3),
+            "finish_position": np.random.randint(1, 21),
+            "is_winner": 1 if i % 20 == 0 else 0,
+            "is_podium": 1 if i % 20 <= 2 else 0,
+            "pitstop_avg": None,
+        })
+    return pd.DataFrame(rows)
