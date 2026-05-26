@@ -59,8 +59,9 @@ FEATURE_COLUMNS = [
 # Categorical columns that need label encoding
 CATEGORICAL_COLUMNS = ["driver_code", "team_id", "circuit_id"]
  
-# Validation split — last N races held out for evaluation
-VALIDATION_RACES = 10
+# Validation split — season-aware
+# Train: all seasons except the current season
+# Validate: current season only
  
  
 def retrain_from_supabase(
@@ -86,6 +87,14 @@ def retrain_from_supabase(
     # ---------------Step 1: Load training dataset----------------------------------------------------
     repo = FeatureRepository()
     df = repo.get_training_dataset(feature_version=feature_version, from_year=from_year)
+
+    data_cutoff_timestamp = "unknown"
+    if "computed_at" in df.columns:
+        max_computed_at = pd.to_datetime(df["computed_at"], utc=True, errors="coerce").max()
+        if pd.notna(max_computed_at):
+            data_cutoff_timestamp = max_computed_at.isoformat()
+
+    training_dataset_hash = str(pd.util.hash_pandas_object(df, index=True).sum())
  
     if df.empty:
         raise ValueError("Training dataset is empty — no features with known results")
@@ -103,19 +112,18 @@ def retrain_from_supabase(
  
     # --------Step 3: Time-based train/validation split--------------------------------------------
     df = df.sort_values(["year", "round"]).reset_index(drop=True)
- 
-    # Get the last VALIDATION_RACES unique (year, round) combinations
-    unique_races = df[["year", "round"]].drop_duplicates().tail(VALIDATION_RACES)
-    val_mask = df.set_index(["year", "round"]).index.isin(
-        unique_races.set_index(["year", "round"]).index
-    )
+
+    current_year = int(df["year"].max())
+    val_mask = df["year"] == current_year
  
     train_df = df[~val_mask].copy()
     val_df = df[val_mask].copy()
+
+    validation_races = int(val_df[["year", "round"]].drop_duplicates().shape[0])
  
     logger.info(
         f"Split: {len(train_df)} train rows, {len(val_df)} val rows "
-        f"({VALIDATION_RACES} validation races)"
+        f"(validation season={current_year}, {validation_races} races)"
     )
  
     all_feature_cols = FEATURE_COLUMNS + [f"{c}_encoded" for c in CATEGORICAL_COLUMNS]
@@ -143,7 +151,7 @@ def retrain_from_supabase(
         val_df,
     )
     metrics["training_rows"] = len(train_df)
-    metrics["validation_races"] = VALIDATION_RACES
+    metrics["validation_races"] = validation_races
  
     logger.info(f"Evaluation: {metrics}")
 
@@ -154,6 +162,8 @@ def retrain_from_supabase(
  
     metadata = {
         "feature_version": feature_version,
+        "data_cutoff_timestamp": data_cutoff_timestamp,
+        "training_dataset_hash": training_dataset_hash,
         "feature_columns": available_cols,
         "categorical_columns": CATEGORICAL_COLUMNS,
         "encoder_classes": {
@@ -292,6 +302,8 @@ def _register_mlflow_run(
         with mlflow.start_run() as run:
             mlflow.log_params({
                 "feature_version": metadata["feature_version"],
+                "data_cutoff_timestamp": metadata.get("data_cutoff_timestamp", "unknown"),
+                "training_dataset_hash": metadata.get("training_dataset_hash", "unknown"),
                 "from_year": metadata["training_window"]["from_year"],
                 "training_rows": metrics["training_rows"],
                 "validation_races": metrics["validation_races"],
