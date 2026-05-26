@@ -55,3 +55,30 @@ FEATURE_COLUMNS = [
     "qualifying_position",
     "qualifying_delta_to_pole",
 ]
+
+# Categorical columns that need label encoding
+CATEGORICAL_COLUMNS = ["driver_code", "team_id", "circuit_id"]
+ 
+# Validation split — last N races held out for evaluation
+VALIDATION_RACES = 10
+ 
+ 
+def retrain_from_supabase(
+    feature_version: str = CURRENT_FEATURE_VERSION,
+    from_year: int = 2018,
+    mlflow_experiment: str = "f1_prediction",
+) -> dict:
+    """
+    Full training pipeline. Called by the Prefect retrain flow.
+ 
+    Returns metrics dict:
+      {
+        "winner_top3_accuracy": float,
+        "winner_exact_accuracy": float,
+        "podium_accuracy": float,
+        "training_rows": int,
+        "validation_races": int,
+        "run_id": str,
+      }
+    """
+    logger.info(f"Retraining started feature_version={feature_version} from_year={from_year}")
