@@ -41,3 +41,39 @@ MINIMUM_THRESHOLDS = {
     "winner_exact_accuracy": 0.10,    # exact winner correct at least 10% of time
     "podium_accuracy":       0.50,    # podium binary correct at least 50% of time
 }
+
+
+def should_retrain() -> bool:
+    """
+    Returns True if ≥3 new results_raw rows have been ingested
+    since the last recorded training run.
+ 
+    'Last training run' is determined by reading the trained_at timestamp
+    from models/metadata.json. If no metadata exists, always returns True.
+    """
+    last_trained_at = _get_last_trained_at()
+ 
+    if last_trained_at is None:
+        logger.info("No previous training run found — retraining required")
+        return True
+ 
+    try:
+        with get_session() as session:
+            count = session.execute(text("""
+                SELECT COUNT(*) FROM results_raw
+                WHERE ingested_at > :last_trained
+            """), {"last_trained": last_trained_at}).scalar()
+ 
+        new_results = count or 0
+        logger.info(f"New results since last training: {new_results}")
+ 
+        if new_results >= 3:
+            logger.info("Retraining trigger: ≥3 new results — will retrain")
+            return True
+        else:
+            logger.info(f"Retraining skipped: only {new_results} new results (need 3)")
+            return False
+ 
+    except Exception as e:
+        logger.error(f"should_retrain check failed: {e}")
+        return False
