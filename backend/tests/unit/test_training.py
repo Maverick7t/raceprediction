@@ -186,3 +186,34 @@ class TestShouldRetrain:
                 from app.ml.training.evaluator import should_retrain
                 result = should_retrain()
         assert result is False
+
+
+        # ---------------------------------------------------------------------------
+# _encode_and_clean
+# ---------------------------------------------------------------------------
+ 
+class TestEncodeAndClean:
+ 
+    def test_categorical_columns_encoded(self, sample_training_df):
+        encoded_df, encoders = _encode_and_clean(sample_training_df)
+        for col in CATEGORICAL_COLUMNS:
+            assert f"{col}_encoded" in encoded_df.columns, f"{col}_encoded missing"
+ 
+    def test_encoders_returned_for_all_categoricals(self, sample_training_df):
+        _, encoders = _encode_and_clean(sample_training_df)
+        for col in CATEGORICAL_COLUMNS:
+            if col in sample_training_df.columns:
+                assert col in encoders
+ 
+    def test_nulls_filled_in_numeric_columns(self, sample_training_df):
+        df = sample_training_df.copy()
+        df.loc[0, "avg_finish_last_5"] = None
+        df.loc[1, "qualifying_position"] = None
+        encoded_df, _ = _encode_and_clean(df)
+        assert encoded_df["avg_finish_last_5"].isna().sum() == 0
+        assert encoded_df["qualifying_position"].isna().sum() == 0
+ 
+    def test_does_not_modify_original_df(self, sample_training_df):
+        original_nulls = sample_training_df["avg_finish_last_5"].isna().sum()
+        _encode_and_clean(sample_training_df)
+        assert sample_training_df["avg_finish_last_5"].isna().sum() == origina
