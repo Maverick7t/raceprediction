@@ -133,3 +133,26 @@ def retrain_from_supabase(
     y_winner_val = val_df["is_winner"]
     y_podium_train = train_df["is_podium"]
     y_podium_val = val_df["is_podium"]
+
+
+    # ------------------------------------------------------------------
+    # Step 4: Train models
+    # ------------------------------------------------------------------
+    logger.info("Training winner model...")
+    winner_model = _train_xgboost(X_train, y_winner_train, label="winner")
+ 
+    logger.info("Training podium model...")
+    podium_model = _train_xgboost(X_train, y_podium_train, label="podium")
+ 
+    # ------------------------------------------------------------------
+    # Step 5: Evaluate
+    # ------------------------------------------------------------------
+    metrics = _evaluate(
+        winner_model, podium_model,
+        X_val, y_winner_val, y_podium_val,
+        val_df,
+    )
+    metrics["training_rows"] = len(train_df)
+    metrics["validation_races"] = VALIDATION_RACES
+ 
+    logger.info(f"Evaluation: {metrics}")
