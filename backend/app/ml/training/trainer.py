@@ -82,3 +82,21 @@ def retrain_from_supabase(
       }
     """
     logger.info(f"Retraining started feature_version={feature_version} from_year={from_year}")
+
+    # ------------------------------------------------------------------
+    # Step 1: Load training dataset
+    # ------------------------------------------------------------------
+    repo = FeatureRepository()
+    df = repo.get_training_dataset(feature_version=feature_version, from_year=from_year)
+ 
+    if df.empty:
+        raise ValueError("Training dataset is empty — no features with known results")
+ 
+    if len(df) < 100:
+        raise ValueError(
+            f"Training dataset too small: {len(df)} rows. "
+            "Need at least 100. Run backfill first."
+        )
+ 
+    logger.info(f"Loaded {len(df)} training rows")
+ 
