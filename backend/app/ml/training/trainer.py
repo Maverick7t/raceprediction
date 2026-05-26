@@ -181,3 +181,16 @@ def retrain_from_supabase(
         json.dump(metadata, f, indent=2)
  
     logger.info(f"Artifacts saved to {MODELS_DIR}")
+
+
+    # ------------------------------------------------------------------
+    # Step 7: Register in MLflow
+    # ------------------------------------------------------------------
+    run_id = _register_mlflow_run(
+        mlflow_experiment, metrics, metadata,
+        winner_model, podium_model,
+    )
+    metrics["run_id"] = run_id
+ 
+    logger.info(f"Retraining complete run_id={run_id}")
+    return metrics
