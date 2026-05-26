@@ -168,7 +168,7 @@ class TestShouldRetrain:
             mock_session = MagicMock()
             mock_session.__enter__ = MagicMock(return_value=mock_session)
             mock_session.__exit__ = MagicMock(return_value=False)
-            mock_session.execute.return_value.scalar.return_value = 5
+            mock_session.execute.return_value.scalar.return_value = 6
  
             with patch("app.ml.training.evaluator.get_session", return_value=mock_session):
                 from app.ml.training.evaluator import should_retrain
@@ -216,4 +216,4 @@ class TestEncodeAndClean:
     def test_does_not_modify_original_df(self, sample_training_df):
         original_nulls = sample_training_df["avg_finish_last_5"].isna().sum()
         _encode_and_clean(sample_training_df)
-        assert sample_training_df["avg_finish_last_5"].isna().sum() == origina
+        assert sample_training_df["avg_finish_last_5"].isna().sum() == original_nulls
