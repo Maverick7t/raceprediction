@@ -42,6 +42,11 @@ class TestQualifyingSchema:
         df["best_lap_seconds"] = None
         result = QualifyingRawSchema.validate(df, lazy=True)
         assert len(result) == 2
+
+    def test_best_lap_seconds_missing_column_allowed(self, qualifying_df):
+        df = qualifying_df.copy().drop(columns=["best_lap_seconds"])
+        result = QualifyingRawSchema.validate(df, lazy=True)
+        assert len(result) == 2
  
     def test_best_lap_too_fast_fails(self, qualifying_df):
         df = qualifying_df.copy()
