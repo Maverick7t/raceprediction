@@ -6,8 +6,8 @@ Two responsibilities:
   2. Model promotion — should the new model replace production?
  
 Retraining trigger rule:
-  Retrain if ≥3 new results_raw rows exist since the last training run.
-  This means retraining happens ~every 3 races during the season.
+    Retrain if ≥6 new results_raw rows exist since the last training run.
+    This means retraining happens ~every 6 races during the season.
   Never during off-season. Never on a fixed schedule.
  
 Promotion rule:
@@ -29,7 +29,7 @@ MODELS_DIR = Path("models")
  
 # Minimum improvement required over production model to trigger promotion
 PROMOTION_RULES = {
-    "winner_top3_accuracy":   0.02,   # must improve by 2 percentage points
+    "winner_top3_accuracy":   0.03,   # must improve by 3 percentage points
     "winner_exact_accuracy":  0.02,
     "podium_accuracy":        0.02,
     "min_metrics_to_beat":    2,       # must beat production on at least 2 of 3
@@ -45,7 +45,7 @@ MINIMUM_THRESHOLDS = {
 
 def should_retrain() -> bool:
     """
-    Returns True if ≥3 new results_raw rows have been ingested
+    Returns True if ≥6 new results_raw rows have been ingested
     since the last recorded training run.
  
     'Last training run' is determined by reading the trained_at timestamp
@@ -67,18 +67,18 @@ def should_retrain() -> bool:
         new_results = count or 0
         logger.info(f"New results since last training: {new_results}")
  
-        if new_results >= 3:
-            logger.info("Retraining trigger: ≥3 new results — will retrain")
+        if new_results >= 6:
+            logger.info("Retraining trigger: ≥6 new results — will retrain")
             return True
         else:
-            logger.info(f"Retraining skipped: only {new_results} new results (need 3)")
+            logger.info(f"Retraining skipped: only {new_results} new results (need 6)")
             return False
  
     except Exception as e:
         logger.error(f"should_retrain check failed: {e}")
         return False
     
-    def should_promote(new_metrics: dict) -> tuple[bool, str]:
+def should_promote(new_metrics: dict) -> tuple[bool, str]:
     """
     Compare new model metrics against current production model metrics.
  
@@ -137,7 +137,7 @@ def should_retrain() -> bool:
         logger.warning(f"NO PROMOTE: {reason}")
         return False, reason
     
-    def promote_model(new_metrics: dict, run_id: str) -> None:
+def promote_model(new_metrics: dict, run_id: str) -> None:
     """
     Write new model as production by updating metadata.json with
     a 'production' flag and the promotion timestamp.
@@ -162,7 +162,7 @@ def should_retrain() -> bool:
  
     logger.info(f"Model promoted to production run_id={run_id}")
 
-    # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
  
