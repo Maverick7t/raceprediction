@@ -149,3 +149,40 @@ class TestShouldPromote:
             promote, reason = should_promote(one_metric)
         assert promote is False
  
+
+ # ---------------------------------------------------------------------------
+# should_retrain
+# ---------------------------------------------------------------------------
+ 
+class TestShouldRetrain:
+ 
+    def test_no_metadata_returns_true(self):
+        with patch("app.ml.training.evaluator._get_last_trained_at", return_value=None):
+            from app.ml.training.evaluator import should_retrain
+            with patch("app.ml.training.evaluator.get_session") as mock_session:
+                result = should_retrain()
+        assert result is True
+ 
+    def test_enough_new_results_returns_true(self):
+        with patch("app.ml.training.evaluator._get_last_trained_at", return_value="2024-01-01T00:00:00+00:00"):
+            mock_session = MagicMock()
+            mock_session.__enter__ = MagicMock(return_value=mock_session)
+            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.execute.return_value.scalar.return_value = 5
+ 
+            with patch("app.ml.training.evaluator.get_session", return_value=mock_session):
+                from app.ml.training.evaluator import should_retrain
+                result = should_retrain()
+        assert result is True
+ 
+    def test_not_enough_results_returns_false(self):
+        with patch("app.ml.training.evaluator._get_last_trained_at", return_value="2024-01-01T00:00:00+00:00"):
+            mock_session = MagicMock()
+            mock_session.__enter__ = MagicMock(return_value=mock_session)
+            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.execute.return_value.scalar.return_value = 2  # only 2, need 3
+ 
+            with patch("app.ml.training.evaluator.get_session", return_value=mock_session):
+                from app.ml.training.evaluator import should_retrain
+                result = should_retrain()
+        assert result is False
