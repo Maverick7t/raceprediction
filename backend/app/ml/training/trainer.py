@@ -221,3 +221,24 @@ def _encode_and_clean(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
             df[col] = df[col].fillna(median if pd.notna(median) else 0.0)
  
     return df, encoders
+
+
+def _train_xgboost(X: pd.DataFrame, y: pd.Series, label: str) -> XGBClassifier:
+    """Train a single XGBoost binary classifier."""
+    scale_pos_weight = float((y == 0).sum()) / max(float((y == 1).sum()), 1)
+ 
+    model = XGBClassifier(
+        n_estimators=200,
+        max_depth=4,
+        learning_rate=0.05,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        scale_pos_weight=scale_pos_weight,  # handle class imbalance
+        use_label_encoder=False,
+        eval_metric="logloss",
+        random_state=42,
+        verbosity=0,
+    )
+    model.fit(X, y)
+    logger.info(f"{label} model trained on {len(X)} rows")
+    return model
