@@ -83,9 +83,7 @@ def retrain_from_supabase(
     """
     logger.info(f"Retraining started feature_version={feature_version} from_year={from_year}")
 
-    # ------------------------------------------------------------------
-    # Step 1: Load training dataset
-    # ------------------------------------------------------------------
+    # ---------------Step 1: Load training dataset----------------------------------------------------
     repo = FeatureRepository()
     df = repo.get_training_dataset(feature_version=feature_version, from_year=from_year)
  
@@ -100,14 +98,10 @@ def retrain_from_supabase(
  
     logger.info(f"Loaded {len(df)} training rows")
 
-    # ------------------------------------------------------------------
-    # Step 2: Encode categoricals + fill nulls
-    # ------------------------------------------------------------------
+    # --------------Step 2: Encode categoricals + fill nulls-------------------------------------------------------
     df, encoders = _encode_and_clean(df)
  
-    # ------------------------------------------------------------------
-    # Step 3: Time-based train/validation split
-    # ------------------------------------------------------------------
+    # --------Step 3: Time-based train/validation split--------------------------------------------
     df = df.sort_values(["year", "round"]).reset_index(drop=True)
  
     # Get the last VALIDATION_RACES unique (year, round) combinations
@@ -135,18 +129,14 @@ def retrain_from_supabase(
     y_podium_val = val_df["is_podium"]
 
 
-    # ------------------------------------------------------------------
-    # Step 4: Train models
-    # ------------------------------------------------------------------
+    # -----------Step 4: Train models---------------------------------------
     logger.info("Training winner model...")
     winner_model = _train_xgboost(X_train, y_winner_train, label="winner")
  
     logger.info("Training podium model...")
     podium_model = _train_xgboost(X_train, y_podium_train, label="podium")
  
-    # ------------------------------------------------------------------
-    # Step 5: Evaluate
-    # ------------------------------------------------------------------
+    # -----------Step 5: Evaluate-------------------------------------------------------
     metrics = _evaluate(
         winner_model, podium_model,
         X_val, y_winner_val, y_podium_val,
@@ -158,9 +148,7 @@ def retrain_from_supabase(
     logger.info(f"Evaluation: {metrics}")
 
 
-    # ------------------------------------------------------------------
-    # Step 6: Save artifacts
-    # ------------------------------------------------------------------
+    # ------------Step 6: Save artifacts---------------------------------------------------------
     winner_model.save_model(str(MODELS_DIR / "xgb_winner.json"))
     podium_model.save_model(str(MODELS_DIR / "xgb_podium.json"))
  
@@ -183,9 +171,7 @@ def retrain_from_supabase(
     logger.info(f"Artifacts saved to {MODELS_DIR}")
 
 
-    # ------------------------------------------------------------------
-    # Step 7: Register in MLflow
-    # ------------------------------------------------------------------
+    # ---------Step 7: Register in MLflow-----------------------------------------------------
     run_id = _register_mlflow_run(
         mlflow_experiment, metrics, metadata,
         winner_model, podium_model,
@@ -196,9 +182,7 @@ def retrain_from_supabase(
     return metrics
 
 
-    # ---------------------------------------------------------------------------
-# Internal helpers
-# ---------------------------------------------------------------------------
+    # -------------Internal helpers---------------------------------------
  
 def _encode_and_clean(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     """
