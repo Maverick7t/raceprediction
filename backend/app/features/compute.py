@@ -207,7 +207,10 @@ def _load_qualifying(race_key: str) -> pd.DataFrame:
             ORDER BY position ASC
         """), {"race_key": race_key})
         rows = result.mappings().all()
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=[
+        "driver_code", "driver_name", "team_id", "circuit_id",
+        "position", "best_lap_seconds", "year", "round",
+    ])
  
  
 def _load_results_history(year: int, round_number: int) -> pd.DataFrame:
@@ -220,7 +223,9 @@ def _load_results_history(year: int, round_number: int) -> pd.DataFrame:
             ORDER BY year ASC, round ASC
         """), {"year": year, "round": round_number})
         rows = result.mappings().all()
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=[
+        "driver_code", "team_id", "finish_position", "points", "status", "year", "round",
+    ])
  
  
 def _load_qualifying_history(year: int, round_number: int) -> pd.DataFrame:
@@ -233,7 +238,9 @@ def _load_qualifying_history(year: int, round_number: int) -> pd.DataFrame:
             ORDER BY year ASC, round ASC
         """), {"year": year, "round": round_number})
         rows = result.mappings().all()
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=[
+        "driver_code", "team_id", "position", "best_lap_seconds", "year", "round",
+    ])
  
  
 def _load_current_results(race_key: str) -> pd.DataFrame:
@@ -245,7 +252,7 @@ def _load_current_results(race_key: str) -> pd.DataFrame:
             WHERE race_key = :race_key
         """), {"race_key": race_key})
         rows = result.mappings().all()
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=["driver_code", "finish_position", "status"])
  
  
 def _load_telemetry(race_key: str) -> pd.DataFrame:
@@ -257,7 +264,10 @@ def _load_telemetry(race_key: str) -> pd.DataFrame:
             WHERE race_key = :race_key
         """), {"race_key": race_key})
         rows = result.mappings().all()
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=[
+        "driver_code", "lap_number", "lap_seconds", "stint",
+        "compound", "tyre_life", "is_accurate",
+    ])
 
 
 # ---------------------------------------------------------------------------
