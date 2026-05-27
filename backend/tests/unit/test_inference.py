@@ -34,3 +34,33 @@ def sample_features_df():
             "reliability_score": 0.9, "feature_version": "v1",
         },
     ])
+
+class TestPredictionService:
+
+    def test_run_inference_returns_summary(self, sample_features_df):
+        mock_engine = MagicMock()
+        mock_engine.model_version = "baseline_v1"
+        mock_engine.feature_version = "v1"
+
+        result_df = sample_features_df.copy()
+        result_df["predicted_winner_prob"] = [0.7, 0.3]
+        result_df["predicted_podium_prob"] = [0.9, 0.6]
+        result_df["predicted_rank"] = [1, 2]
+        mock_engine.predict.return_value = result_df
+
+        mock_feature_repo = MagicMock()
+        mock_feature_repo.get_features_for_race.return_value = sample_features_df
+
+        mock_prediction_repo = MagicMock()
+        mock_prediction_repo.upsert_predictions.return_value = 2
+
+        with patch("app.services.prediction_service.get_engine", return_value=mock_engine), \
+             patch("app.services.prediction_service._feature_repo", mock_feature_repo), \
+             patch("app.services.prediction_service._prediction_repo", mock_prediction_repo):
+
+            from app.services.prediction_service import run_inference_for_race
+            result = run_inference_for_race("bahrain_grand_prix_2024")
+
+        assert result["status"] == "completed"
+        assert result["rows_stored"] == 2
+        assert result["model_version"] == "baseline_v1"
