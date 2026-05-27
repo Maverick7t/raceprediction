@@ -83,7 +83,7 @@ def upgrade() -> None:
     )
     op.create_index("idx_constructor_standings_year", "constructor_standings_cache", ["year"])
 
-    def downgrade() -> None:
+def downgrade() -> None:
     op.drop_table("constructor_standings_cache")
     op.drop_table("driver_standings_cache")
     op.drop_table("predictions")
