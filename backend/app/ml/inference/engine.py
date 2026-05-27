@@ -97,3 +97,31 @@ class InferenceEngine:
             f"race_key={df['race_key'].iloc[0] if 'race_key' in df.columns else 'unknown'}"
         )
         return df.sort_values("predicted_rank").reset_index(drop=True)
+    
+#--------------------Internal-----------------------------------------------------------------
+
+    def _encode_categoricals(self, df: pd.DataFrame) -> pd.DataFrame:
+        for col in self.categorical_columns:
+            if col not in df.columns:
+                continue
+            enc = self._encoders.get(col)
+            if enc is None:
+                continue
+
+            known = set(enc.classes_)
+
+            def _safe_encode(v, enc=enc, known=known):
+                if pd.isna(v) or v not in known:
+                    return 0  # unknown → default to 0
+                return int(enc.transform([v])[0])
+
+            df[f"{col}_encoded"] = df[col].map(_safe_encode)
+        return df
+
+    def _fill_numeric_nulls(self, df: pd.DataFrame) -> pd.DataFrame:
+        base_cols = self._metadata.get("base_feature_columns", [])
+        for col in base_cols:
+            if col in df.columns and df[col].isna().any():
+                median = df[col].median()
+                df[col] = df[col].fillna(median if pd.notna(median) else 0.0)
+        return df
