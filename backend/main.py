@@ -57,3 +57,30 @@ app = FastAPI(
     redoc_url=None,
 )
 
+# Rate limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS
+allowed_origins = (
+    ["*"]
+    if config.ENVIRONMENT == "dev"
+    else [os.environ.get("FRONTEND_URL", "https://your-vercel-app.vercel.app")]
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
+# Routes
+app.include_router(api_router)
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled exception {type(exc).__name__}: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
