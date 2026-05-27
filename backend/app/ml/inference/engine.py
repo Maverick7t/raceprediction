@@ -55,3 +55,45 @@ class InferenceEngine:
             f"feature_version={self.feature_version} "
             f"features={len(self.feature_columns)}"
         )
+
+# ----------------Public------------------------------------------------------------------
+
+    def predict(self, features_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Run winner + podium prediction for every driver in features_df.
+
+        Returns the same DataFrame with three new columns:
+          predicted_winner_prob  — float [0, 1]
+          predicted_podium_prob  — float [0, 1]
+          predicted_rank         — int 1-20, ranked by winner_prob descending
+
+        Sorted by predicted_rank ascending (winner first).
+        """
+        if features_df.empty:
+            logger.warning("predict() called with empty DataFrame")
+            return features_df
+
+        df = features_df.copy()
+        df = self._encode_categoricals(df)
+        df = self._fill_numeric_nulls(df)
+
+        available = [c for c in self.feature_columns if c in df.columns]
+        missing = set(self.feature_columns) - set(available)
+        if missing:
+            logger.warning(f"Missing feature columns at inference: {missing}")
+
+        X = df[available]
+
+        df["predicted_winner_prob"] = self._winner_model.predict_proba(X)[:, 1]
+        df["predicted_podium_prob"] = self._podium_model.predict_proba(X)[:, 1]
+        df["predicted_rank"] = (
+            df["predicted_winner_prob"]
+            .rank(ascending=False, method="min")
+            .astype(int)
+        )
+
+        logger.info(
+            f"Inference complete: {len(df)} drivers, "
+            f"race_key={df['race_key'].iloc[0] if 'race_key' in df.columns else 'unknown'}"
+        )
+        return df.sort_values("predicted_rank").reset_index(drop=True)
