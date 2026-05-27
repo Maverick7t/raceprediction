@@ -59,3 +59,27 @@ def run_inference_for_race(race_key: str) -> dict:
         "feature_version": engine.feature_version,
         "status": "completed",
     }
+
+# ------------------------------Read methods — called by API route handlers----------------------------------------
+
+def get_predictions(race_key: str) -> list[dict]:
+    df = _prediction_repo.get_predictions_for_race(race_key)
+    return _df_to_list(df)
+
+
+def get_latest_predictions() -> list[dict]:
+    df = _prediction_repo.get_latest_predictions()
+    return _df_to_list(df)
+
+
+def list_races() -> list[str]:
+    return _prediction_repo.list_race_keys()
+
+
+def _df_to_list(df) -> list[dict]:
+    if df.empty:
+        return []
+    # Convert timestamps to ISO strings for JSON serialisation
+    if "generated_at" in df.columns:
+        df["generated_at"] = df["generated_at"].astype(str)
+    return df.to_dict(orient="records")
