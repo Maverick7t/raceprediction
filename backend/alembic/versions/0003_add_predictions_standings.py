@@ -82,3 +82,8 @@ def upgrade() -> None:
         sa.UniqueConstraint("year", "team_id", name="constructor_standings_year_team_unique"),
     )
     op.create_index("idx_constructor_standings_year", "constructor_standings_cache", ["year"])
+
+    def downgrade() -> None:
+    op.drop_table("constructor_standings_cache")
+    op.drop_table("driver_standings_cache")
+    op.drop_table("predictions")
