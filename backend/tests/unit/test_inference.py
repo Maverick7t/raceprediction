@@ -64,3 +64,19 @@ class TestPredictionService:
         assert result["status"] == "completed"
         assert result["rows_stored"] == 2
         assert result["model_version"] == "baseline_v1"
+
+        def test_run_inference_no_features(self):
+        mock_engine = MagicMock()
+        mock_engine.feature_version = "v1"
+
+        mock_feature_repo = MagicMock()
+        mock_feature_repo.get_features_for_race.return_value = pd.DataFrame()
+
+        with patch("app.services.prediction_service.get_engine", return_value=mock_engine), \
+             patch("app.services.prediction_service._feature_repo", mock_feature_repo):
+
+            from app.services.prediction_service import run_inference_for_race
+            result = run_inference_for_race("missing_race_2099")
+
+        assert result["status"] == "no_features"
+        assert result["rows_stored"] == 0
