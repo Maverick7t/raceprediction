@@ -14,6 +14,8 @@ from prefect import task
  
 from app.core.logging import get_logger
 from app.db.repositories.raw_data_repo import RawDataRepository
+from app.db.repositories.standings_repo import StandingsRepository
+_standings_repo = StandingsRepository()
  
 logger = get_logger(__name__)
 _repo = RawDataRepository()
@@ -51,4 +53,16 @@ def store_results_raw(df: pd.DataFrame) -> int:
 def store_telemetry_raw(df: pd.DataFrame) -> int:
     count = _repo.upsert_telemetry(df)
     logger.info(f"store_telemetry_raw: {count} rows written")
+    return count
+
+@task(name="store_driver_standings", retries=2, retry_delay_seconds=10)
+def store_driver_standings(df: pd.DataFrame) -> int:
+    count = _standings_repo.upsert_driver_standings(df)
+    logger.info(f"store_driver_standings: {count} rows written")
+    return count
+
+@task(name="store_constructor_standings", retries=2, retry_delay_seconds=10)
+def store_constructor_standings(df: pd.DataFrame) -> int:
+    count = _standings_repo.upsert_constructor_standings(df)
+    logger.info(f"store_constructor_standings: {count} rows written")
     return count
