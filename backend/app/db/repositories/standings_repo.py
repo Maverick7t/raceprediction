@@ -81,3 +81,33 @@ class StandingsRepository:
             return len(rows)
         except Exception as e:
             raise StorageError("constructor_standings_cache", str(e)) from e
+        
+
+    def get_driver_standings(self, year: int) -> pd.DataFrame:
+        with get_session() as session:
+            result = session.execute(text("""
+                SELECT driver_code, driver_name, team, position, points, wins, round
+                FROM driver_standings_cache
+                WHERE year = :year
+                ORDER BY position ASC
+            """), {"year": year})
+            rows = result.mappings().all()
+        return pd.DataFrame(rows)
+
+    def get_constructor_standings(self, year: int) -> pd.DataFrame:
+        with get_session() as session:
+            result = session.execute(text("""
+                SELECT team_id, team, position, points, wins, round
+                FROM constructor_standings_cache
+                WHERE year = :year
+                ORDER BY position ASC
+            """), {"year": year})
+            rows = result.mappings().all()
+        return pd.DataFrame(rows)
+
+    def latest_year(self) -> int | None:
+        with get_session() as session:
+            result = session.execute(text(
+                "SELECT MAX(year) FROM driver_standings_cache"
+            ))
+            return result.scalar()
