@@ -27,7 +27,7 @@ class DriverStandings(Base):
     )
 
 
-    class ConstructorStandings(Base):
+class ConstructorStandings(Base):
     __tablename__ = "constructor_standings_cache"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
