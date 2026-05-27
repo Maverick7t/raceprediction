@@ -80,3 +80,32 @@ class TestPredictionService:
 
         assert result["status"] == "no_features"
         assert result["rows_stored"] == 0
+
+
+    class TestPredictionRepo:
+
+    def test_prepare_rows_converts_numpy(self):
+        from app.db.repositories.prediction_repo import PredictionRepository
+        df = pd.DataFrame([{
+            "race_key": "bahrain_2024", "driver_code": "VER",
+            "driver_name": "Verstappen", "team_id": "red_bull",
+            "qualifying_position": np.int64(1),
+            "predicted_winner_prob": np.float64(0.75),
+            "predicted_podium_prob": np.float64(0.90),
+            "predicted_rank": np.int64(1),
+            "model_version": "baseline_v1", "feature_version": "v1",
+        }])
+        rows = PredictionRepository._prepare_rows(df)
+        assert isinstance(rows[0]["qualifying_position"], int)
+        assert isinstance(rows[0]["predicted_winner_prob"], float)
+
+    def test_prepare_rows_nan_to_none(self):
+        from app.db.repositories.prediction_repo import PredictionRepository
+        df = pd.DataFrame([{
+            "race_key": "r", "driver_code": "VER", "driver_name": "V",
+            "team_id": "rb", "qualifying_position": float("nan"),
+            "predicted_winner_prob": 0.5, "predicted_podium_prob": 0.7,
+            "predicted_rank": 1, "model_version": "v1", "feature_version": "v1",
+        }])
+        rows = PredictionRepository._prepare_rows(df)
+        assert rows[0]["qualifying_position"] is None
