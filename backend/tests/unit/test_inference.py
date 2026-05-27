@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 import pytest
 from unittest.mock import patch, MagicMock
+from app.db.repositories.prediction_repo import PredictionRepository
+
 
 
 @pytest.fixture
@@ -65,7 +67,7 @@ class TestPredictionService:
         assert result["rows_stored"] == 2
         assert result["model_version"] == "baseline_v1"
 
-        def test_run_inference_no_features(self):
+    def test_run_inference_no_features(self):
         mock_engine = MagicMock()
         mock_engine.feature_version = "v1"
 
@@ -82,10 +84,8 @@ class TestPredictionService:
         assert result["rows_stored"] == 0
 
 
-    class TestPredictionRepo:
-
+class TestPredictionRepo:
     def test_prepare_rows_converts_numpy(self):
-        from app.db.repositories.prediction_repo import PredictionRepository
         df = pd.DataFrame([{
             "race_key": "bahrain_2024", "driver_code": "VER",
             "driver_name": "Verstappen", "team_id": "red_bull",
@@ -100,7 +100,6 @@ class TestPredictionService:
         assert isinstance(rows[0]["predicted_winner_prob"], float)
 
     def test_prepare_rows_nan_to_none(self):
-        from app.db.repositories.prediction_repo import PredictionRepository
         df = pd.DataFrame([{
             "race_key": "r", "driver_code": "VER", "driver_name": "V",
             "team_id": "rb", "qualifying_position": float("nan"),
