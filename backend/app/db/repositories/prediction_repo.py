@@ -77,3 +77,42 @@ class PredictionRepository:
         if not rows:
             logger.warning(f"No predictions found for race_key={race_key}")
         return pd.DataFrame(rows)
+    
+    def get_latest_predictions(self) -> pd.DataFrame:
+        """Return predictions for the most recently generated race."""
+        with get_session() as session:
+            result = session.execute(text("""
+                SELECT p.race_key, p.driver_code, p.driver_name, p.team_id,
+                       p.qualifying_position, p.predicted_winner_prob,
+                       p.predicted_podium_prob, p.predicted_rank,
+                       p.model_version, p.feature_version, p.generated_at
+                FROM predictions p
+                INNER JOIN (
+                    SELECT race_key
+                    FROM predictions
+                    ORDER BY generated_at DESC
+                    LIMIT 1
+                ) latest ON p.race_key = latest.race_key
+                ORDER BY p.predicted_rank ASC
+            """))
+            rows = result.mappings().all()
+        return pd.DataFrame(rows)
+
+    def list_race_keys(self) -> list[str]:
+        """All race keys that have stored predictions, newest first."""
+        with get_session() as session:
+            result = session.execute(text("""
+                SELECT DISTINCT race_key
+                FROM predictions
+                ORDER BY race_key DESC
+            """))
+            return [r[0] for r in result.fetchall()]
+
+    def get_most_recent_generated_at(self) -> datetime | None:
+        """Used by the staleness health check."""
+        with get_session() as session:
+            result = session.execute(text("""
+                SELECT MAX(generated_at) FROM predictions
+            """))
+            value = result.scalar()
+        return value
