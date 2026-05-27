@@ -116,3 +116,51 @@ class PredictionRepository:
             """))
             value = result.scalar()
         return value
+    
+# --------------------------------Internal------------------------------------------------------------------------
+
+    @staticmethod
+    def _prepare_rows(df: pd.DataFrame) -> list[dict]:
+        import math
+        import numpy as np
+
+        now = datetime.now(timezone.utc)
+        rows = df.to_dict(orient="records")
+        cleaned = []
+
+        required = {
+            "race_key", "driver_code", "driver_name", "team_id",
+            "predicted_winner_prob", "predicted_podium_prob",
+            "predicted_rank", "model_version", "feature_version",
+        }
+
+        for row in rows:
+            row.setdefault("generated_at", now)
+            row.setdefault("qualifying_position", None)
+
+            clean = {}
+            for k, v in row.items():
+                if k not in required and k not in {
+                    "qualifying_position", "generated_at",
+                    "model_version", "feature_version",
+                }:
+                    if k not in required:
+                        pass  # keep all columns — filter happens at INSERT
+                if v is None:
+                    clean[k] = None
+                elif isinstance(v, np.integer):
+                    clean[k] = int(v)
+                elif isinstance(v, np.floating):
+                    clean[k] = None if math.isnan(v) else float(v)
+                elif isinstance(v, np.bool_):
+                    clean[k] = bool(v)
+                elif isinstance(v, float) and math.isnan(v):
+                    clean[k] = None
+                else:
+                    try:
+                        clean[k] = None if pd.isna(v) else v
+                    except (TypeError, ValueError):
+                        clean[k] = v
+            cleaned.append(clean)
+
+        return cleaned
