@@ -51,3 +51,33 @@ class StandingsRepository:
             return len(rows)
         except Exception as e:
             raise StorageError("driver_standings_cache", str(e)) from e
+        
+
+    def upsert_constructor_standings(self, df: pd.DataFrame) -> int:
+        if df is None or df.empty:
+            return 0
+
+        stmt = text("""
+            INSERT INTO constructor_standings_cache (
+                year, round, team_id, team, position, points, wins, synced_at
+            ) VALUES (
+                :year, :round, :team_id, :team, :position, :points, :wins, :synced_at
+            )
+            ON CONFLICT (year, team_id)
+            DO UPDATE SET
+                round     = EXCLUDED.round,
+                team      = EXCLUDED.team,
+                position  = EXCLUDED.position,
+                points    = EXCLUDED.points,
+                wins      = EXCLUDED.wins,
+                synced_at = EXCLUDED.synced_at
+        """)
+
+        rows = self._prepare(df)
+        try:
+            with get_session() as session:
+                session.execute(stmt, rows)
+            logger.info(f"Upserted {len(rows)} constructor standings rows")
+            return len(rows)
+        except Exception as e:
+            raise StorageError("constructor_standings_cache", str(e)) from e
