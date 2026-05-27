@@ -111,6 +111,32 @@ class StandingsRepository:
                 "SELECT MAX(year) FROM driver_standings_cache"
             ))
             return result.scalar()
+
+    @staticmethod
+    def _prepare(df: pd.DataFrame) -> list[dict]:
+        import math
+        import numpy as np
+
+        now = datetime.now(timezone.utc)
+        rows = df.to_dict(orient="records")
+        cleaned = []
+        for row in rows:
+            row.setdefault("synced_at", now)
+            clean = {}
+            for key, value in row.items():
+                if value is None:
+                    clean[key] = None
+                elif isinstance(value, np.integer):
+                    clean[key] = int(value)
+                elif isinstance(value, np.floating):
+                    clean[key] = None if math.isnan(value) else float(value)
+                else:
+                    try:
+                        clean[key] = None if pd.isna(value) else value
+                    except (TypeError, ValueError):
+                        clean[key] = value
+            cleaned.append(clean)
+        return cleaned
         
     def get_driver_standings(self, year: int) -> pd.DataFrame:
         with get_session() as session:
