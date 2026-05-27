@@ -142,6 +142,15 @@ def repo(session, monkeypatch):
  
     monkeypatch.setattr("app.db.repositories.raw_data_repo.get_session", mock_get_session)
     return r
+
+
+@pytest.fixture(autouse=True)
+def _clear_raw_tables(session):
+    session.execute(text("DELETE FROM qualifying_raw"))
+    session.execute(text("DELETE FROM results_raw"))
+    session.execute(text("DELETE FROM telemetry_raw"))
+    session.execute(text("DELETE FROM validation_failures"))
+    session.flush()
  
  
 class TestUpsertQualifying:
