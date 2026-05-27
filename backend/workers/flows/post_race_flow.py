@@ -32,6 +32,7 @@ from workers.tasks.fetch_tasks import (
 )
 from workers.tasks.store_tasks import store_results_raw, store_telemetry_raw
 from workers.tasks.validate_tasks import validate_results, validate_telemetry
+from workers.tasks.store_tasks import store_results_raw, store_telemetry_raw, store_driver_standings, store_constructor_standings
  
  
 @flow(
@@ -93,15 +94,11 @@ def post_race_flow(year: int, round_number: int) -> dict:
     try:
         _driver_standings = fetch_driver_standings(year, round_number)
         _constructor_standings = fetch_constructor_standings(year, round_number)
-        # Standings are stored in Phase 4 (standings_cache table).
-        # Fetched here so the data is available for feature engineering in Phase 2.
+        store_driver_standings(_driver_standings)
+        store_constructor_standings(_constructor_standings)
         standings_fetched = True
-        run_logger.info(
-            f"Standings fetched: {len(_driver_standings)} driver rows, "
-            f"{len(_constructor_standings)} constructor rows"
-        )
     except Exception as exc:
-        run_logger.warning(f"Standings fetch failed (non-fatal): {exc}")
+        run_logger.warning(f"Standings fetch/store failed (non-fatal): {exc}")
  
     run_logger.info(f"post_race_flow complete race_key={race_key}")
  
