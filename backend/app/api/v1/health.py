@@ -55,3 +55,25 @@ def health_db():
     healthy = db_ok and not status.get("predictions_stale")
     code = 200 if healthy else 503
     return JSONResponse(status_code=code, content={"status": "ok" if healthy else "degraded", **status})
+
+@router.get("/model")
+def health_model():
+    if not engine_is_loaded():
+        return JSONResponse(
+            status_code=503,
+            content={"status": "not_loaded", "detail": "Model not yet loaded"},
+        )
+    try:
+        engine = get_engine()
+        return {
+            "status": "ok",
+            "model_version": engine.model_version,
+            "feature_version": engine.feature_version,
+            "feature_columns": len(engine.feature_columns),
+        }
+    except Exception as e:
+        logger.error(f"Model health check failed: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={"status": "error", "detail": str(e)},
+        )
