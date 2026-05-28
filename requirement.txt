@@ -38,3 +38,7 @@ python-dotenv==1.0.1
 
 # Observability
 sentry-sdk[fastapi]==2.19.0
+
+sentry-sdk[fastapi]>=1.40
+logtail-python>=0.3
+ruff>=0.4
