@@ -23,6 +23,12 @@ from app.core.config import config
 from app.core.logging import get_logger
 from app.ml.inference.loader import get_engine
 
+# main.py — add these two imports + the init call
+from app.core.sentry import init_sentry
+from app.core.config import config
+
+init_sentry()   # ← must be before app = FastAPI(...)
+
 logger = get_logger(__name__)
 
 limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
@@ -67,10 +73,12 @@ allowed_origins = (
     if config.ENVIRONMENT == "dev"
     else [os.environ.get("FRONTEND_URL", "https://your-vercel-app.vercel.app")]
 )
+# Remove your current hardcoded origins list and replace with:
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_methods=["GET"],
+    allow_origins=config.cors_origins,   # ← uses config, not a hardcoded list
+    allow_credentials=True,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
