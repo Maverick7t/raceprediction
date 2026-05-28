@@ -10,6 +10,7 @@ Both runs are idempotent — re-running overwrites existing rows via upsert.
 
 import sys
 from prefect import flow, task, get_run_logger
+from app.core.sentry import init_sentry, set_sentry_context
 
 from app.features.compute import compute_features_for_race
 from app.db.repositories.feature_repo import FeatureRepository
@@ -35,6 +36,8 @@ def feature_engineering_flow(race_key: str, year: int, round_number: int) -> dic
         year:         e.g. 2024
         round_number: e.g. 1
     """
+    init_sentry()
+    set_sentry_context(flow_name="feature_engineering_flow")
     logger = get_run_logger()
     logger.info(f"Feature engineering started race_key={race_key}")
 
