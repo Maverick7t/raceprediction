@@ -82,3 +82,43 @@ def init_sentry() -> None:
     except Exception as exc:
         # Sentry init failure must never crash the application
         logger.error(f"Sentry init failed (non-fatal): {exc}")
+
+        def capture_exception(exc: Exception, **extra: object) -> None:
+    """
+    Manually capture an exception to Sentry with optional extra context.
+    No-op if Sentry is not initialised.
+ 
+    Usage:
+        try:
+            risky_operation()
+        except SomeError as e:
+            capture_exception(e, race_key=race_key, driver=driver_code)
+            raise
+    """
+    if not _initialised:
+        return
+    try:
+        import sentry_sdk
+        with sentry_sdk.push_scope() as scope:
+            for key, value in extra.items():
+                scope.set_extra(key, value)
+            sentry_sdk.capture_exception(exc)
+    except Exception:
+        pass  # Sentry capture must never propagate
+ 
+ 
+def set_sentry_context(race_key: str | None = None, flow_name: str | None = None) -> None:
+    """
+    Tag the current Sentry scope with pipeline context.
+    Call at the start of a Prefect flow or API request handler for richer error context.
+    """
+    if not _initialised:
+        return
+    try:
+        import sentry_sdk
+        if race_key:
+            sentry_sdk.set_tag("race_key", race_key)
+        if flow_name:
+            sentry_sdk.set_tag("flow", flow_name)
+    except Exception:
+        pass
