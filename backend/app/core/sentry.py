@@ -83,7 +83,7 @@ def init_sentry() -> None:
         # Sentry init failure must never crash the application
         logger.error(f"Sentry init failed (non-fatal): {exc}")
 
-        def capture_exception(exc: Exception, **extra: object) -> None:
+def capture_exception(exc: Exception, **extra: object) -> None:
     """
     Manually capture an exception to Sentry with optional extra context.
     No-op if Sentry is not initialised.
