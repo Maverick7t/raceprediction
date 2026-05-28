@@ -1,0 +1,12 @@
+feature,importance
+qualifying_position,0.32819116
+podium_rate,0.15525916
+constructor_form,0.11112483
+avg_finish_last_5,0.07646285
+team_id_encoded,0.064184636
+avg_quali_last_5,0.05856714
+driver_code_encoded,0.046528894
+teammate_delta,0.04495357
+circuit_id_encoded,0.04337881
+reliability_score,0.036770124
+dnf_rate,0.034578823

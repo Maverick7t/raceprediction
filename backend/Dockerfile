@@ -57,11 +57,8 @@ COPY --chown=appuser:appgroup backend/ .
 # FastF1 cache dir — writable by appuser
 RUN mkdir -p /tmp/fastf1_cache && chown appuser:appgroup /tmp/fastf1_cache
 
-# Models dir — must exist; real artifacts are mounted or downloaded at startup
+# Models dir — must exist; artifacts are included in the image under backend/models
 RUN mkdir -p /app/models && chown appuser:appgroup /app/models
-
-# Copy model artifacts from repo root into the expected path
-COPY --chown=appuser:appgroup models/ /app/models/
 
 USER appuser
 

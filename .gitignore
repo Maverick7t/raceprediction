@@ -75,4 +75,7 @@ cache/
 data/
 *.csv
 backend/mlruns/
-backend/models/
+
+# Keep production model artifacts in git (used by inference at runtime)
+!backend/models/
+!backend/models/**
