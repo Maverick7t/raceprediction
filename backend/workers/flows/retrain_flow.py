@@ -17,6 +17,7 @@ If training fails, the existing production model continues serving.
  
 import sys
 from prefect import flow, task, get_run_logger
+from app.core.sentry import init_sentry, set_sentry_context
  
 from app.ml.training.evaluator import should_retrain, should_promote, promote_model
 from app.ml.training.trainer import retrain_from_supabase
@@ -46,6 +47,8 @@ def evaluate_task(metrics: dict) -> dict:
  
 @flow(name="retrain_flow", log_prints=True)
 def retrain_flow() -> dict:
+    init_sentry()
+    set_sentry_context(flow_name="retrain_flow")
     logger = get_run_logger()
 
 
