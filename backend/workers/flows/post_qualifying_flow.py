@@ -3,6 +3,7 @@ Post-qualifying ingestion flow. (Phase 4 update — adds inference step.)
 """
 
 from prefect import flow, get_run_logger
+from app.core.sentry import init_sentry, set_sentry_context
 
 from workers.tasks.fetch_tasks import fetch_qualifying_ergast, fetch_qualifying_fastf1
 from workers.tasks.store_tasks import store_qualifying_raw
@@ -17,6 +18,8 @@ from workers.flows.feature_engineering_flow import feature_engineering_flow
     log_prints=True,
 )
 def post_qualifying_flow(year: int, round_number: int) -> dict:
+    init_sentry()
+    set_sentry_context(flow_name="post_qualifying_flow")
     run_logger = get_run_logger()
     run_logger.info(f"post_qualifying_flow started year={year} round={round_number}")
 
