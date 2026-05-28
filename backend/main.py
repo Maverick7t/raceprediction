@@ -21,13 +21,8 @@ from slowapi.util import get_remote_address
 from app.api.router import api_router
 from app.core.config import config
 from app.core.logging import get_logger
-from app.ml.inference.loader import get_engine
-
-# main.py — add these two imports + the init call
 from app.core.sentry import init_sentry
-from app.core.config import config
-
-init_sentry()   # ← must be before app = FastAPI(...)
+from app.ml.inference.loader import get_engine
 
 logger = get_logger(__name__)
 
@@ -37,6 +32,7 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # --- Startup ---
+    init_sentry()
     logger.info("API startup: loading inference engine")
     try:
         engine = get_engine()
