@@ -22,6 +22,7 @@ That check is in Phase 3 and is invoked as a separate flow.
 """
  
 from prefect import flow, get_run_logger
+from app.core.sentry import init_sentry, set_sentry_context
  
 from workers.tasks.fetch_tasks import (
     fetch_constructor_standings,
@@ -49,6 +50,8 @@ def post_race_flow(year: int, round_number: int) -> dict:
     Returns:
         Summary dict with counts for downstream logging and Phase 3 trigger.
     """
+    init_sentry()
+    set_sentry_context(flow_name="post_race_flow")
     run_logger = get_run_logger()
     run_logger.info(f"post_race_flow started year={year} round={round_number}")
 
