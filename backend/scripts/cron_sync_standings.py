@@ -28,7 +28,6 @@ import sys
 from datetime import datetime, timezone
 
 from prefect import flow, task, get_run_logger
-from prefect.tasks import exponential_backoff
 
 from app.core.sentry import init_sentry, capture_exception, set_sentry_context
 from app.core.logging import get_logger
@@ -38,6 +37,7 @@ from app.db.repositories.standings_repo import StandingsRepository
 logger = get_logger(__name__)
 _ergast = ErgastClient()
 _standings_repo = StandingsRepository()
+BACKOFF_SEQUENCE = [2, 4, 8]
 
 
 # ---------------------------------------------------------------------------
@@ -47,7 +47,7 @@ _standings_repo = StandingsRepository()
 @task(
     name="fetch_driver_standings_cron",
     retries=3,
-    retry_delay_seconds=exponential_backoff(backoff_factor=2),
+    retry_delay_seconds=BACKOFF_SEQUENCE,
     description="Fetch current driver championship standings from Ergast",
 )
 def fetch_driver_standings_task(year: int):
@@ -59,7 +59,7 @@ def fetch_driver_standings_task(year: int):
 @task(
     name="fetch_constructor_standings_cron",
     retries=3,
-    retry_delay_seconds=exponential_backoff(backoff_factor=2),
+    retry_delay_seconds=BACKOFF_SEQUENCE,
     description="Fetch current constructor championship standings from Ergast",
 )
 def fetch_constructor_standings_task(year: int):
@@ -159,4 +159,5 @@ def cron_sync_standings_flow(year: int | None = None) -> dict:
 
 if __name__ == "__main__":
     year_arg = int(sys.argv[1]) if len(sys.argv) > 1 else None
-    print(cron_sync_standings_flow(year=year_arg))
+    result = cron_sync_standings_flow(year=year_arg)
+    logger.info(f"Cron completed result={result}")

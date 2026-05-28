@@ -11,7 +11,6 @@ Prefect retries each task independently, not the whole flow.
  
 import pandas as pd
 from prefect import task
-from prefect.tasks import exponential_backoff
  
 from app.integrations.ergast import ErgastClient
 from app.integrations.fastf1_client import load_qualifying_session, load_race_telemetry
@@ -22,12 +21,13 @@ logger = get_logger(__name__)
  
 _ergast = ErgastClient()
 _openf1 = OpenF1Client()
+BACKOFF_SEQUENCE = [2, 4, 8]
  
  
 @task(
     name="fetch_qualifying_ergast",
     retries=3,
-    retry_delay_seconds=exponential_backoff(backoff_factor=2),
+    retry_delay_seconds=BACKOFF_SEQUENCE,
     description="Fetch qualifying classification from Ergast/Jolpica",
 )
 def fetch_qualifying_ergast(year: int, round_number: int) -> pd.DataFrame:
@@ -36,7 +36,7 @@ def fetch_qualifying_ergast(year: int, round_number: int) -> pd.DataFrame:
 @task(
     name="fetch_qualifying_fastf1",
     retries=3,
-    retry_delay_seconds=exponential_backoff(backoff_factor=2),
+    retry_delay_seconds=BACKOFF_SEQUENCE,
     description="Fetch qualifying lap times from FastF1 (enriches Ergast data)",
 )
 def fetch_qualifying_fastf1(year: int, round_number: int) -> pd.DataFrame:
@@ -45,7 +45,7 @@ def fetch_qualifying_fastf1(year: int, round_number: int) -> pd.DataFrame:
 @task(
     name="fetch_race_results",
     retries=3,
-    retry_delay_seconds=exponential_backoff(backoff_factor=2),
+    retry_delay_seconds=BACKOFF_SEQUENCE,
     description="Fetch final race classification from Ergast",
 )
 def fetch_race_results(year: int, round_number: int) -> pd.DataFrame:
@@ -55,7 +55,7 @@ def fetch_race_results(year: int, round_number: int) -> pd.DataFrame:
 @task(
     name="fetch_race_telemetry",
     retries=3,
-    retry_delay_seconds=exponential_backoff(backoff_factor=2),
+    retry_delay_seconds=BACKOFF_SEQUENCE,
     description="Fetch race lap-level telemetry from FastF1",
 )
 def fetch_race_telemetry(year: int, round_number: int) -> pd.DataFrame:
@@ -64,7 +64,7 @@ def fetch_race_telemetry(year: int, round_number: int) -> pd.DataFrame:
 @task(
     name="fetch_driver_standings",
     retries=3,
-    retry_delay_seconds=exponential_backoff(backoff_factor=2),
+    retry_delay_seconds=BACKOFF_SEQUENCE,
     description="Fetch driver championship standings from Ergast",
 )
 def fetch_driver_standings(year: int, round_number: int) -> pd.DataFrame:
@@ -74,7 +74,7 @@ def fetch_driver_standings(year: int, round_number: int) -> pd.DataFrame:
 @task(
     name="fetch_constructor_standings",
     retries=3,
-    retry_delay_seconds=exponential_backoff(backoff_factor=2),
+    retry_delay_seconds=BACKOFF_SEQUENCE,
     description="Fetch constructor championship standings from Ergast",
 )
 def fetch_constructor_standings(year: int, round_number: int) -> pd.DataFrame:
