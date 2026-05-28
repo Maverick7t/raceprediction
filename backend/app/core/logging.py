@@ -106,6 +106,18 @@ class JSONFormatter(logging.Formatter):
 
 # Better Stack / Logtail Handler
 
+_BETTERSTACK_HANDLER: logging.Handler | None = None
+
+
+def _get_betterstack_token() -> str | None:
+    # Primary env var used by this repo
+    token = os.environ.get("BETTERSTACK_TOKEN")
+    if token:
+        return token
+    # Common alternative name used in Better Stack / Logtail docs
+    return os.environ.get("LOGTAIL_SOURCE_TOKEN")
+
+
 def _create_betterstack_handler() -> logging.Handler | None:
     """
     Creates Better Stack Logtail handler if configured.
@@ -114,7 +126,7 @@ def _create_betterstack_handler() -> logging.Handler | None:
         logging.Handler | None
     """
 
-    token = os.environ.get("BETTERSTACK_TOKEN")
+    token = _get_betterstack_token()
 
     if not token:
         return None
@@ -143,9 +155,13 @@ def _create_betterstack_handler() -> logging.Handler | None:
         return None
 
 
-# Shared Better Stack handler singleton
-
-_BETTERSTACK_HANDLER = _create_betterstack_handler()
+def _get_or_create_betterstack_handler() -> logging.Handler | None:
+    """Lazily creates Better Stack handler after env/.env is loaded."""
+    global _BETTERSTACK_HANDLER
+    if _BETTERSTACK_HANDLER is not None:
+        return _BETTERSTACK_HANDLER
+    _BETTERSTACK_HANDLER = _create_betterstack_handler()
+    return _BETTERSTACK_HANDLER
 
 
 # Logger Factory
@@ -178,29 +194,27 @@ def get_logger(name: str) -> logging.Logger:
 
     logger = logging.getLogger(name)
 
-
-
-    if logger.handlers:
-        return logger
-
     log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 
     logger.setLevel(getattr(logging, log_level, logging.INFO))
 
     # Stdout JSON handler
 
-    stdout_handler = logging.StreamHandler(sys.stdout)
-
-    stdout_handler.setLevel(logging.DEBUG)
-    stdout_handler.setFormatter(JSONFormatter())
-
-    logger.addHandler(stdout_handler)
+    if not any(
+        isinstance(h, logging.StreamHandler) and getattr(h, "stream", None) is sys.stdout
+        for h in logger.handlers
+    ):
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        stdout_handler.setLevel(logging.DEBUG)
+        stdout_handler.setFormatter(JSONFormatter())
+        logger.addHandler(stdout_handler)
 
     # Optional Better Stack shipping
      
 
-    if _BETTERSTACK_HANDLER is not None:
-        logger.addHandler(_BETTERSTACK_HANDLER)
+    betterstack_handler = _get_or_create_betterstack_handler()
+    if betterstack_handler is not None and betterstack_handler not in logger.handlers:
+        logger.addHandler(betterstack_handler)
 
     # Prevent propagation to root logger
     # Avoid duplicate logs under uvicorn/gunicorn-
