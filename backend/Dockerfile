@@ -51,14 +51,17 @@ WORKDIR /app
 # Copy installed packages from builder
 COPY --from=builder /install /usr/local
 
-# Copy application source
-COPY --chown=appuser:appgroup . .
+# Copy application source (repo layout: backend/ contains FastAPI app)
+COPY --chown=appuser:appgroup backend/ .
 
 # FastF1 cache dir — writable by appuser
 RUN mkdir -p /tmp/fastf1_cache && chown appuser:appgroup /tmp/fastf1_cache
 
 # Models dir — must exist; real artifacts are mounted or downloaded at startup
 RUN mkdir -p /app/models && chown appuser:appgroup /app/models
+
+# Copy model artifacts from repo root into the expected path
+COPY --chown=appuser:appgroup models/ /app/models/
 
 USER appuser
 
