@@ -13,7 +13,7 @@ services:
     name: f1-prediction-api
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerContext: .
 
     # Render free tier — upgrade to `starter` ($7/mo) when you need
     # always-on (no spin-down) or more memory.
