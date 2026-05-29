@@ -66,31 +66,72 @@ jobs:
           FLOW_NAME=$(echo "${{ steps.resolve.outputs.deployment }}" | cut -d'/' -f1)
           DEPLOYMENT_NAME=$(echo "${{ steps.resolve.outputs.deployment }}" | cut -d'/' -f2-)
 
-          RESPONSE=$(curl -s -w "\n%{http_code}" \
-            -X POST \
-            -H "Authorization: Bearer ${{ secrets.PREFECT_API_KEY }}" \
+          PREFECT_BASE_URL="https://api.prefect.cloud/api/accounts/${{ secrets.PREFECT_ACCOUNT_ID }}/workspaces/${{ secrets.PREFECT_WORKSPACE_ID }}"
+          AUTH_HEADER="Authorization: Bearer ${{ secrets.PREFECT_API_KEY }}"
+
+          echo "Resolving Prefect deployment: ${FLOW_NAME}/${DEPLOYMENT_NAME}"
+          DEPLOYMENT_STATUS=$(curl -sS -o deployment.json -w "%{http_code}" \
+            -H "$AUTH_HEADER" \
             -H "Content-Type: application/json" \
-            "https://api.prefect.cloud/api/accounts/${{ secrets.PREFECT_ACCOUNT_ID }}/workspaces/${{ secrets.PREFECT_WORKSPACE_ID }}/deployments/name/${FLOW_NAME}/${DEPLOYMENT_NAME}/create_flow_run" \
-            -d '{
-              "parameters": {
-                "year": ${{ inputs.year }},
-                "round_number": ${{ inputs.round }}
-              },
-              "name": "gh-actions-${{ inputs.event }}-y${{ inputs.year }}-r${{ inputs.round }}"
-            }')
+            "${PREFECT_BASE_URL}/deployments/name/${FLOW_NAME}/${DEPLOYMENT_NAME}")
 
-          HTTP_STATUS=$(echo "$RESPONSE" | tail -1)
-          BODY=$(echo "$RESPONSE" | head -1)
+          echo "Deployment lookup HTTP status: $DEPLOYMENT_STATUS"
+          echo "Deployment lookup response:"
+          cat deployment.json
 
-          echo "HTTP status: $HTTP_STATUS"
-          echo "Response: $BODY"
-
-          if [ "$HTTP_STATUS" != "201" ] && [ "$HTTP_STATUS" != "200" ]; then
-            echo "Failed to trigger Prefect flow — HTTP $HTTP_STATUS"
+          if [ "$DEPLOYMENT_STATUS" != "200" ]; then
+            echo "Failed to resolve Prefect deployment — HTTP $DEPLOYMENT_STATUS"
             exit 1
           fi
 
-          FLOW_RUN_ID=$(echo "$BODY" | python3 -c "import sys, json; print(json.load(sys.stdin).get('id','unknown'))")
+          DEPLOYMENT_ID=$(python3 -c "import json; print(json.load(open('deployment.json')).get('id',''))")
+          if [ -z "$DEPLOYMENT_ID" ]; then
+            echo "Prefect deployment lookup succeeded but returned no 'id'"
+            exit 1
+          fi
+
+          echo "Resolved deployment id: $DEPLOYMENT_ID"
+
+          YEAR="${{ inputs.year }}"
+          ROUND_NUMBER="${{ inputs.round }}"
+          FLOW_RUN_NAME="gh-actions-${{ inputs.event }}-y${{ inputs.year }}-r${{ inputs.round }}"
+          export YEAR ROUND_NUMBER FLOW_RUN_NAME
+          PAYLOAD=$(python3 - <<'PY'
+import json
+import os
+
+year = int(os.environ["YEAR"])
+round_number = int(os.environ["ROUND_NUMBER"])
+name = os.environ["FLOW_RUN_NAME"]
+
+print(
+    json.dumps(
+        {
+            "parameters": {"year": year, "round_number": round_number},
+            "name": name,
+        }
+    )
+)
+PY
+          )
+
+          CREATE_STATUS=$(curl -sS -o create_flow_run.json -w "%{http_code}" \
+            -X POST \
+            -H "$AUTH_HEADER" \
+            -H "Content-Type: application/json" \
+            "${PREFECT_BASE_URL}/deployments/${DEPLOYMENT_ID}/create_flow_run" \
+            -d "$PAYLOAD")
+
+          echo "Create flow run HTTP status: $CREATE_STATUS"
+          echo "Create flow run response:"
+          cat create_flow_run.json
+
+          if [ "$CREATE_STATUS" != "201" ] && [ "$CREATE_STATUS" != "200" ]; then
+            echo "Failed to create flow run — HTTP $CREATE_STATUS"
+            exit 1
+          fi
+
+          FLOW_RUN_ID=$(python3 -c "import json; print(json.load(open('create_flow_run.json')).get('id','unknown'))")
           echo "Flow run created: id=$FLOW_RUN_ID"
           echo "View at: https://app.prefect.cloud/flow-runs/flow-run/$FLOW_RUN_ID"
 
