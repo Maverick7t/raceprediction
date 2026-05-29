@@ -31,6 +31,9 @@ from xgboost import XGBClassifier
  
 from app.core.logging import get_logger
 from app.db.repositories.feature_repo import FeatureRepository, CURRENT_FEATURE_VERSION
+
+from app.ml.storage.model_store import upload_model_artifacts
+from app.core.config import config
  
 logger = get_logger(__name__)
  
@@ -209,6 +212,25 @@ def retrain_from_supabase(
  
     logger.info(f"Artifacts saved to {MODELS_DIR}")
 
+    # --------------- INSERT AFTER "logger.info(f"Artifacts saved to {MODELS_DIR}")" ----------------
+ 
+    # Step 6b: Upload artifacts to Supabase Storage (survives Render redeploys)
+    if config.supabase_storage_configured:
+        upload_success = upload_model_artifacts(MODELS_DIR)
+        if upload_success:
+            logger.info("Model artifacts uploaded to Supabase Storage")
+        else:
+            logger.warning(
+                "Model artifacts saved locally but upload to Supabase Storage failed. "
+                "Artifacts will be lost on next Render redeploy. "
+                "Check SUPABASE_URL and SUPABASE_SERVICE_KEY."
+            )
+    else:
+        logger.warning(
+            "SUPABASE_URL or SUPABASE_SERVICE_KEY not set — "
+            "skipping cloud upload. Artifacts are local only."
+        )
+
 
     # ---------Step 7: Register in MLflow-----------------------------------------------------
     run_id = _register_mlflow_run(
@@ -218,7 +240,7 @@ def retrain_from_supabase(
         available_cols=available_cols,
     )
     metrics["run_id"] = run_id
- 
+
     logger.info(f"Retraining complete run_id={run_id}")
     return metrics
 
