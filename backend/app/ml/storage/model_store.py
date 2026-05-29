@@ -89,3 +89,40 @@ def _get_client():
             all_ok = False
  
     return all_ok
+
+
+def download_model_artifacts(local_dir: Path) -> bool:
+    """
+    Download all model artifacts from Supabase Storage to local_dir.
+    Called by loader.py on API startup when local files are missing.
+ 
+    Returns True only if ALL three files downloaded successfully.
+    Partial downloads leave the local_dir in a bad state and return False.
+    """
+    try:
+        client = _get_client()
+    except Exception as e:
+        logger.error(f"Cannot connect to Supabase Storage for download: {e}")
+        return False
+ 
+    local_dir.mkdir(parents=True, exist_ok=True)
+    downloaded = 0
+ 
+    for filename in MODEL_FILES:
+        try:
+            data = client.storage.from_(BUCKET).download(filename)
+            dest = local_dir / filename
+            with open(dest, "wb") as f:
+                f.write(data)
+            logger.info(f"Downloaded {filename} from Supabase Storage → {dest}")
+            downloaded += 1
+        except Exception as e:
+            logger.error(f"Download failed for {filename}: {e}")
+ 
+    success = downloaded == len(MODEL_FILES)
+    if not success:
+        logger.error(
+            f"Partial download: {downloaded}/{len(MODEL_FILES)} files. "
+            "Model cannot be loaded — run retrain_flow to generate and upload artifacts."
+        )
+    return success
