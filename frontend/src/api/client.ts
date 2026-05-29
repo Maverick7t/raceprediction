@@ -40,12 +40,48 @@ async function apiFetch<T>(path: string): Promise<T> {
 
 /** Latest race predictions (most recent qualifying weekend) */
 export function fetchLatestPredictions(): Promise<PredictionsResponse> {
-    return apiFetch<PredictionsResponse>('/predictions');
+    return apiFetch<any>('/predictions').then((raw) => {
+        // Normalize backend field names to frontend `Prediction` shape
+        return {
+            ...raw,
+            predictions: (raw.predictions || []).map((p: any) => ({
+                driver_code: p.driver_code,
+                driver_name: p.driver_name,
+                team_id: p.team_id,
+                race_key: p.race_key,
+                qualifying_position: p.qualifying_position ?? null,
+                predicted_at: p.generated_at ?? p.predicted_at,
+                model_version: p.model_version,
+                feature_version: p.feature_version,
+                // normalized fields expected by UI
+                winner_probability: p.predicted_winner_prob ?? p.winner_probability,
+                podium_probability: p.predicted_podium_prob ?? p.podium_probability,
+                predicted_position: p.predicted_rank ?? p.predicted_position,
+            })),
+        } as PredictionsResponse;
+    });
 }
 
 /** Predictions for a specific race_key */
 export function fetchPredictionsByRace(raceKey: string): Promise<PredictionsResponse> {
-    return apiFetch<PredictionsResponse>(`/predictions/${raceKey}`);
+    return apiFetch<any>(`/predictions/${raceKey}`).then((raw) => {
+        return {
+            ...raw,
+            predictions: (raw.predictions || []).map((p: any) => ({
+                driver_code: p.driver_code,
+                driver_name: p.driver_name,
+                team_id: p.team_id,
+                race_key: p.race_key,
+                qualifying_position: p.qualifying_position ?? null,
+                predicted_at: p.generated_at ?? p.predicted_at,
+                model_version: p.model_version,
+                feature_version: p.feature_version,
+                winner_probability: p.predicted_winner_prob ?? p.winner_probability,
+                podium_probability: p.predicted_podium_prob ?? p.podium_probability,
+                predicted_position: p.predicted_rank ?? p.predicted_position,
+            })),
+        } as PredictionsResponse;
+    });
 }
 
 /** All race keys that have stored predictions */
