@@ -60,7 +60,7 @@ class ModelArtifacts:
             f"production={self.is_production}>"
         )
     
-    def load_model_artifacts(models_dir: Path) -> ModelArtifacts:
+def load_model_artifacts(models_dir: Path) -> ModelArtifacts:
     """
     Load winner model, podium model, and metadata.
  
@@ -109,3 +109,27 @@ class ModelArtifacts:
             "Then ensure SUPABASE_URL and SUPABASE_SERVICE_KEY are set so "
             "artifacts are uploaded after training."
         )
+    
+def _local_artifacts_complete(models_dir: Path) -> bool:
+    """Return True only if ALL required files are present locally."""
+    return all((models_dir / f).exists() for f in _REQUIRED_FILES)
+ 
+ 
+def _load_from_disk(models_dir: Path) -> ModelArtifacts:
+    """Load and return model artifacts from the local filesystem."""
+    try:
+        winner = XGBClassifier()
+        winner.load_model(str(models_dir / "xgb_winner.json"))
+
+        podium = XGBClassifier()
+        podium.load_model(str(models_dir / "xgb_podium.json"))
+
+        with open(models_dir / "metadata.json") as f:
+            metadata = json.load(f)
+
+    except Exception as e:
+        raise RuntimeError(f"Failed to load model artifacts from {models_dir}: {e}") from e
+
+    artifacts = ModelArtifacts(winner, podium, metadata)
+    logger.info(f"Loaded: {artifacts}")
+    return artifacts
