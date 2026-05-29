@@ -14,7 +14,7 @@ export function Header() {
         <header className="sticky top-0 z-50 border-b border-border-subtle bg-bg-primary/80 backdrop-blur-md">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
                 {/* Logo */}
-                <Link to="/" className="flex items-center gap-3 group">
+                <Link to="/" className="flex items-center gap-3 group text-text-primary">
                     <div className="h-7 w-1 rounded-full bg-f1-red transition-all group-hover:h-9" />
                     <span className="font-heading text-xl font-700 tracking-widest text-text-primary uppercase">
                         F1<span className="text-f1-red">.</span>PREDICT
