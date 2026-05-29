@@ -23,11 +23,14 @@ from pathlib import Path
 from xgboost import XGBClassifier
  
 from app.core.logging import get_logger
+from app.core.config import config
+from app.ml.inference.engine import InferenceEngine
 from app.ml.storage.model_store import download_model_artifacts, artifacts_exist_remotely
  
 logger = get_logger(__name__)
  
 _REQUIRED_FILES = ["xgb_winner.json", "xgb_podium.json", "metadata.json"]
+_ENGINE: InferenceEngine | None = None
  
  
 class ModelArtifacts:
@@ -133,3 +136,30 @@ def _load_from_disk(models_dir: Path) -> ModelArtifacts:
     artifacts = ModelArtifacts(winner, podium, metadata)
     logger.info(f"Loaded: {artifacts}")
     return artifacts
+
+
+def get_engine(models_dir: Path | None = None) -> InferenceEngine:
+    """Return a cached inference engine, loading it from disk on first use."""
+    global _ENGINE
+
+    if _ENGINE is not None:
+        return _ENGINE
+
+    engine_dir = models_dir or config.models_path
+
+    if not _local_artifacts_complete(engine_dir):
+        logger.warning(
+            f"Local model artifacts incomplete in {engine_dir} — attempting recovery"
+        )
+        if not download_model_artifacts(engine_dir):
+            raise RuntimeError(
+                f"Unable to load inference engine because model artifacts are missing in {engine_dir}."
+            )
+
+    _ENGINE = InferenceEngine(engine_dir)
+    return _ENGINE
+
+
+def engine_is_loaded() -> bool:
+    """Return True when the inference engine has already been initialized."""
+    return _ENGINE is not None
