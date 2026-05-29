@@ -63,11 +63,14 @@ jobs:
 
       - name: Trigger Prefect deployment
         run: |
+          FLOW_NAME=$(echo "${{ steps.resolve.outputs.deployment }}" | cut -d'/' -f1)
+          DEPLOYMENT_NAME=$(echo "${{ steps.resolve.outputs.deployment }}" | cut -d'/' -f2-)
+
           RESPONSE=$(curl -s -w "\n%{http_code}" \
             -X POST \
             -H "Authorization: Bearer ${{ secrets.PREFECT_API_KEY }}" \
             -H "Content-Type: application/json" \
-            "https://api.prefect.cloud/api/accounts/${{ secrets.PREFECT_ACCOUNT_ID }}/workspaces/${{ secrets.PREFECT_WORKSPACE_ID }}/deployments/name/${{ steps.resolve.outputs.deployment }}/create_flow_run" \
+            "https://api.prefect.cloud/api/accounts/${{ secrets.PREFECT_ACCOUNT_ID }}/workspaces/${{ secrets.PREFECT_WORKSPACE_ID }}/deployments/name/${FLOW_NAME}/${DEPLOYMENT_NAME}/create_flow_run" \
             -d '{
               "parameters": {
                 "year": ${{ inputs.year }},
