@@ -50,7 +50,7 @@ def _get_client():
         )
     return create_client(url, key)
  
- def upload_model_artifacts(local_dir: Path) -> bool:
+def upload_model_artifacts(local_dir: Path) -> bool:
     """
     Upload all model artifacts from local_dir to Supabase Storage.
     Called by trainer.py after every successful training run.
