@@ -13,17 +13,17 @@ export default {
             },
             colors: {
                 // Core palette
-                'bg-primary': '#06060A',
+                'bg-primary': '#0B0B0F',
                 'bg-surface': '#0E0E14',
-                'bg-elevated': '#16161E',
+                'bg-elevated': '#13131A',
                 // Borders
-                'border-subtle': 'rgba(255,255,255,0.06)',
-                'border-default': 'rgba(255,255,255,0.10)',
-                'border-strong': 'rgba(255,255,255,0.18)',
+                'border-subtle': 'rgba(255,255,255,0.08)',
+                'border-default': 'rgba(255,255,255,0.12)',
+                'border-strong': 'rgba(255,255,255,0.20)',
                 // Text
-                'text-primary': '#F0F0F5',
-                'text-secondary': '#8888A0',
-                'text-muted': '#484858',
+                'text-primary': '#F2F2F7',
+                'text-secondary': '#A8A8B6',
+                'text-muted': '#6B6B7F',
                 // Accent
                 'f1-red': '#E10600',
                 'f1-red-dim': 'rgba(225,6,0,0.15)',
