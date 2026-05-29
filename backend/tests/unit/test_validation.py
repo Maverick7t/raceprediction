@@ -196,6 +196,15 @@ class TestUpsertQualifying:
             text("SELECT best_lap_seconds FROM qualifying_raw WHERE driver_code='VER'")
         ).fetchone()
         assert row[0] is None
+
+    def test_missing_best_lap_seconds_column_stored_as_null(self, repo, session, qualifying_df):
+        df = qualifying_df.copy().drop(columns=["best_lap_seconds"])
+        count = repo.upsert_qualifying(df)
+        assert count == 2
+        row = session.execute(
+            text("SELECT best_lap_seconds FROM qualifying_raw WHERE driver_code='VER'")
+        ).fetchone()
+        assert row[0] is None
  
  
 class TestUpsertResults:

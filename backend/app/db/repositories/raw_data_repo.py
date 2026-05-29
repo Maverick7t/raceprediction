@@ -92,7 +92,15 @@ class RawDataRepository:
                 ingested_at      = EXCLUDED.ingested_at
         """)
  
-        return self._execute_batch(df, stmt, "qualifying_raw")
+        # best_lap_seconds is optional in validation (required=False) and can be
+        # missing from the DataFrame entirely; SQLAlchemy text binds still need
+        # the key present in every row mapping.
+        return self._execute_batch(
+            df,
+            stmt,
+            "qualifying_raw",
+            defaults={"best_lap_seconds": None},
+        )
     def upsert_results(self, df: pd.DataFrame) -> int:
         """
         Upsert race result rows.
@@ -192,12 +200,18 @@ class RawDataRepository:
     # Internal
     # ------------------------------------------------------------------
  
-    def _execute_batch(self, df: pd.DataFrame, stmt, table: str) -> int:
+    def _execute_batch(
+        self,
+        df: pd.DataFrame,
+        stmt,
+        table: str,
+        defaults: dict[str, object] | None = None,
+    ) -> int:
         """
         Execute a parameterised statement in batches of _BATCH_SIZE.
         Raises StorageError on any batch failure.
         """
-        rows = self._prepare_rows(df)
+        rows = self._prepare_rows(df, defaults=defaults)
         total = 0
         num_batches = (len(rows) + _BATCH_SIZE - 1) // _BATCH_SIZE
  
@@ -219,7 +233,10 @@ class RawDataRepository:
         return total
  
     @staticmethod
-    def _prepare_rows(df: pd.DataFrame) -> list[dict]:
+    def _prepare_rows(
+        df: pd.DataFrame,
+        defaults: dict[str, object] | None = None,
+    ) -> list[dict]:
         """
         Convert DataFrame to plain Python dicts.
         Adds ingested_at timestamp.
@@ -233,6 +250,11 @@ class RawDataRepository:
         for row in rows:
             row["ingested_at"] = now
             clean_row = {k: _to_python_type(v) for k, v in row.items()}
+
+            if defaults:
+                for key, default_value in defaults.items():
+                    clean_row.setdefault(key, default_value)
+
             cleaned.append(clean_row)
  
         return cleaned
