@@ -126,3 +126,25 @@ def download_model_artifacts(local_dir: Path) -> bool:
             "Model cannot be loaded — run retrain_flow to generate and upload artifacts."
         )
     return success
+
+def artifacts_exist_remotely() -> bool:
+    """
+    Check whether all model artifacts exist in Supabase Storage.
+ 
+    Used by /health/model to distinguish:
+      - 'artifacts never uploaded' → need to run retrain_flow
+      - 'artifacts exist but download failed' → Supabase connectivity issue
+    """
+    try:
+        client = _get_client()
+        files = client.storage.from_(BUCKET).list()
+        existing_names = {f["name"] for f in files}
+        missing = [name for name in MODEL_FILES if name not in existing_names]
+        if missing:
+            logger.warning(f"Remote artifacts missing: {missing}")
+            return False
+        return True
+    except Exception as e:
+        logger.warning(f"Remote artifact check failed: {e}")
+        return False
+ 
