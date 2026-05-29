@@ -20,7 +20,7 @@ export function PredictionCard({ prediction, rank, style }: PredictionCardProps)
                     {prediction.driver_name}
                 </p>
                 <p className="truncate font-mono text-xs uppercase tracking-wide text-text-muted">
-                    {prediction.driver_code} · {prediction.team_id}
+                    {prediction.driver_code} · {String(prediction.team_id).replace(/_/g, ' ').toUpperCase()}
                 </p>
             </div>
             <div className="hidden w-32 sm:block">
