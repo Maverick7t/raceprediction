@@ -1,7 +1,11 @@
 # .github/workflows/race_weekend_triggers.yml
 #
-# Manually-triggered (workflow_dispatch) jobs that fire the Prefect pipeline
-# for each race weekend event.  Two jobs:
+# Manually-triggered (workflow_dispatch) jobs that run the Prefect pipeline
+# for each race weekend event.
+#
+# Prefect Cloud hybrid/push work pools can be blocked on free tier in Prefect 3.
+# This workflow runs flows in local/ephemeral mode on the GitHub runner instead
+# (no Prefect Cloud API calls, no work pools).
 #
 #   post_qualifying  — run after Saturday qualifying (fires post_qualifying_flow)
 #   post_race        — run after Sunday race        (fires post_race_flow)
@@ -11,14 +15,11 @@
 #   GitHub CLI: gh workflow run race_weekend_triggers.yml \
 #                 -f event=post_qualifying -f year=2025 -f round=8
 #
-# Required GitHub Secrets:
-#   PREFECT_API_KEY     — Prefect Cloud API key
-#   PREFECT_ACCOUNT_ID  — Prefect Cloud account UUID
-#   PREFECT_WORKSPACE_ID — Prefect Cloud workspace UUID
-#
-# Deployment names (set when you register flows in Prefect Cloud):
-#   post_qualifying_ingestion/default
-#   post_race_ingestion/default
+# Required GitHub Secrets (for the flow to talk to prod services):
+#   DATABASE_URL          — Supabase Postgres connection string
+#   SUPABASE_SERVICE_KEY  — Supabase service role key
+#   SENTRY_DSN            — Sentry project DSN
+#   BETTERSTACK_TOKEN     — Better Stack (Logtail) source token
 #
 # Both jobs are idempotent — safe to run twice for the same round.
 
@@ -50,90 +51,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Resolve deployment name
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: backend/requirement.txt
+
+      - name: Install dependencies
+        run: pip install -r backend/requirement.txt
+
+      - name: Resolve flow module
         id: resolve
         run: |
           if [ "${{ inputs.event }}" = "post_qualifying" ]; then
-            echo "deployment=post_qualifying_ingestion/default" >> $GITHUB_OUTPUT
+            echo "module=workers.flows.post_qualifying_flow" >> $GITHUB_OUTPUT
             echo "flow_label=Post-Qualifying Ingestion" >> $GITHUB_OUTPUT
           else
-            echo "deployment=post_race_ingestion/default" >> $GITHUB_OUTPUT
+            echo "module=workers.flows.post_race_flow" >> $GITHUB_OUTPUT
             echo "flow_label=Post-Race Ingestion" >> $GITHUB_OUTPUT
           fi
 
-      - name: Trigger Prefect deployment
+      - name: Run flow (local/ephemeral Prefect)
+        working-directory: backend
         run: |
-          FLOW_NAME=$(echo "${{ steps.resolve.outputs.deployment }}" | cut -d'/' -f1)
-          DEPLOYMENT_NAME=$(echo "${{ steps.resolve.outputs.deployment }}" | cut -d'/' -f2-)
-
-          PREFECT_BASE_URL="https://api.prefect.cloud/api/accounts/${{ secrets.PREFECT_ACCOUNT_ID }}/workspaces/${{ secrets.PREFECT_WORKSPACE_ID }}"
-          AUTH_HEADER="Authorization: Bearer ${{ secrets.PREFECT_API_KEY }}"
-
-          echo "Resolving Prefect deployment: ${FLOW_NAME}/${DEPLOYMENT_NAME}"
-          DEPLOYMENT_STATUS=$(curl -sS -o deployment.json -w "%{http_code}" \
-            -H "$AUTH_HEADER" \
-            -H "Content-Type: application/json" \
-            "${PREFECT_BASE_URL}/deployments/name/${FLOW_NAME}/${DEPLOYMENT_NAME}")
-
-          echo "Deployment lookup HTTP status: $DEPLOYMENT_STATUS"
-          echo "Deployment lookup response:"
-          cat deployment.json
-
-          if [ "$DEPLOYMENT_STATUS" != "200" ]; then
-            echo "Failed to resolve Prefect deployment — HTTP $DEPLOYMENT_STATUS"
-            exit 1
-          fi
-
-          DEPLOYMENT_ID=$(python3 -c "import json; print(json.load(open('deployment.json')).get('id',''))")
-          if [ -z "$DEPLOYMENT_ID" ]; then
-            echo "Prefect deployment lookup succeeded but returned no 'id'"
-            exit 1
-          fi
-
-          echo "Resolved deployment id: $DEPLOYMENT_ID"
-
-          YEAR="${{ inputs.year }}"
-          ROUND_NUMBER="${{ inputs.round }}"
-          FLOW_RUN_NAME="gh-actions-${{ inputs.event }}-y${{ inputs.year }}-r${{ inputs.round }}"
-          export YEAR ROUND_NUMBER FLOW_RUN_NAME
-          PAYLOAD=$(python3 - <<'PY'
-import json
-import os
-
-year = int(os.environ["YEAR"])
-round_number = int(os.environ["ROUND_NUMBER"])
-name = os.environ["FLOW_RUN_NAME"]
-
-print(
-    json.dumps(
-        {
-            "parameters": {"year": year, "round_number": round_number},
-            "name": name,
-        }
-    )
-)
-PY
-          )
-
-          CREATE_STATUS=$(curl -sS -o create_flow_run.json -w "%{http_code}" \
-            -X POST \
-            -H "$AUTH_HEADER" \
-            -H "Content-Type: application/json" \
-            "${PREFECT_BASE_URL}/deployments/${DEPLOYMENT_ID}/create_flow_run" \
-            -d "$PAYLOAD")
-
-          echo "Create flow run HTTP status: $CREATE_STATUS"
-          echo "Create flow run response:"
-          cat create_flow_run.json
-
-          if [ "$CREATE_STATUS" != "201" ] && [ "$CREATE_STATUS" != "200" ]; then
-            echo "Failed to create flow run — HTTP $CREATE_STATUS"
-            exit 1
-          fi
-
-          FLOW_RUN_ID=$(python3 -c "import json; print(json.load(open('create_flow_run.json')).get('id','unknown'))")
-          echo "Flow run created: id=$FLOW_RUN_ID"
-          echo "View at: https://app.prefect.cloud/flow-runs/flow-run/$FLOW_RUN_ID"
+          python -m "${{ steps.resolve.outputs.module }}" "${{ inputs.year }}" "${{ inputs.round }}"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          BETTERSTACK_TOKEN: ${{ secrets.BETTERSTACK_TOKEN }}
+          ENVIRONMENT: prod
+          LOG_LEVEL: INFO
 
       - name: Summary
         run: |

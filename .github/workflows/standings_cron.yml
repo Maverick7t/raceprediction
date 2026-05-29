@@ -1,0 +1,58 @@
+# .github/workflows/standings_cron.yml
+#
+# Weekly standings sync (runs in GitHub Actions on a schedule).
+#
+# This runs the Prefect flow in local/ephemeral mode on the GitHub runner
+# (no Prefect Cloud API calls, no work pools).
+#
+# Required GitHub Secrets:
+#   DATABASE_URL          — Supabase Postgres connection string
+#   SUPABASE_SERVICE_KEY  — Supabase service role key
+#   SENTRY_DSN            — Sentry project DSN
+#   BETTERSTACK_TOKEN     — Better Stack (Logtail) source token
+
+name: Standings Cron Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      year:
+        description: "Optional year to sync (defaults to current year)"
+        required: false
+        type: string
+  schedule:
+    - cron: "0 6 * * 1" # Monday 06:00 UTC
+
+jobs:
+  cron_sync_standings:
+    name: Cron sync standings
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: backend/requirement.txt
+
+      - name: Install dependencies
+        run: pip install -r backend/requirement.txt
+
+      - name: Run standings sync (local/ephemeral Prefect)
+        working-directory: backend
+        run: |
+          if [ -n "${{ inputs.year }}" ]; then
+            python -m scripts.cron_sync_standings "${{ inputs.year }}"
+          else
+            python -m scripts.cron_sync_standings
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          BETTERSTACK_TOKEN: ${{ secrets.BETTERSTACK_TOKEN }}
+          ENVIRONMENT: prod
+          LOG_LEVEL: INFO
