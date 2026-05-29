@@ -50,3 +50,42 @@ def _get_client():
         )
     return create_client(url, key)
  
+ def upload_model_artifacts(local_dir: Path) -> bool:
+    """
+    Upload all model artifacts from local_dir to Supabase Storage.
+    Called by trainer.py after every successful training run.
+ 
+    Returns True if all files uploaded, False if any failed.
+    Does NOT raise — training succeeded, local files still usable
+    until the next Render redeploy.
+    """
+    try:
+        client = _get_client()
+    except Exception as e:
+        logger.error(f"Cannot connect to Supabase Storage: {e}")
+        return False
+ 
+    all_ok = True
+    for filename in MODEL_FILES:
+        local_path = local_dir / filename
+        if not local_path.exists():
+            logger.warning(f"Skipping upload — file not found: {local_path}")
+            all_ok = False
+            continue
+ 
+        try:
+            with open(local_path, "rb") as f:
+                data = f.read()
+ 
+            # upsert=True → overwrites existing file in the bucket
+            client.storage.from_(BUCKET).upload(
+                path=filename,
+                file=data,
+                file_options={"upsert": "true", "content-type": "application/octet-stream"},
+            )
+            logger.info(f"Uploaded {filename} to Supabase Storage (bucket='{BUCKET}')")
+        except Exception as e:
+            logger.error(f"Upload failed for {filename}: {e}")
+            all_ok = False
+ 
+    return all_ok
