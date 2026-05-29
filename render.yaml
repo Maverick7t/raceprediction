@@ -1,40 +1,64 @@
-# render.yaml
+# render.yaml — Render Blueprint
+# Deploy by connecting your GitHub repo to Render and pointing at this file.
+# https://render.com/docs/blueprint-spec
 #
-# Render Blueprint — defines the service declaratively.
-# Commit this file; Render reads it on first connect and on each deploy.
-#
-# To connect: Render Dashboard → New → Blueprint → point to this repo.
-#
-# Env vars marked `sync: false` must be set manually in the Render dashboard
-# (they are secrets that should never appear in source control).
+# All secret values use sync:false — set them manually in:
+#   Render Dashboard → your service → Environment
 
 services:
   - type: web
     name: f1-prediction-api
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
-    dockerContext: .
+    dockerContext: ./backend
 
-    # Render free tier — upgrade to `starter` ($7/mo) when you need
-    # always-on (no spin-down) or more memory.
+    # Free tier — upgrade to $7/month for persistent disk if you need
+    # local MLflow or model caching between deploys.
     plan: free
 
-    # Health check: Render will not route traffic until this returns 200.
-    # Must match the HEALTHCHECK in the Dockerfile.
+    # Render sets PORT automatically; our Dockerfile EXPOSE and CMD use it.
     healthCheckPath: /api/v1/health
 
-    # Zero-downtime deploys: old instance stays live until new one is healthy.
-    # This is automatic on Render paid plans; on free it's best-effort.
-
+    # Zero-downtime deploy: old instance keeps serving until new one is healthy.
     envVars:
+      # ---- Required: set these in Render Dashboard ----
+      - key: DATABASE_URL
+        sync: false           # Supabase Transaction Pooler URL
+
+      - key: SUPABASE_URL
+        sync: false           # https://[ref].supabase.co
+
+      - key: SUPABASE_SERVICE_KEY
+        sync: false           # service_role JWT from Supabase Settings → API
+
+      - key: API_SECRET_KEY
+        sync: false           # random 32-char hex for write endpoint auth
+
+      - key: FRONTEND_URL
+        sync: false           # https://your-app.vercel.app
+
+      - key: SENTRY_DSN
+        sync: false
+
+      - key: BETTERSTACK_TOKEN
+        sync: false
+
+      # ---- Render sets these automatically ----
+      - key: PORT
+        value: "8000"
+
+      # ---- Non-secret config ----
       - key: ENVIRONMENT
         value: prod
 
       - key: LOG_LEVEL
         value: INFO
 
-      - key: FASTF1_CACHE_DIR
-        value: /tmp/fastf1_cache
+      - key: MODELS_DIR
+        value: models
+
+      - key: MODEL_STORAGE_BUCKET
+        value: models
 
       - key: ERGAST_BASE_URL
         value: https://api.jolpi.ca/ergast/f1
@@ -42,22 +66,8 @@ services:
       - key: OPENF1_BASE_URL
         value: https://api.openf1.org/v1
 
-      - key: MODELS_DIR
-        value: models
+      - key: FASTF1_CACHE_DIR
+        value: /tmp/fastf1_cache
 
-      # Secrets — set these manually in the Render dashboard
-      # (Dashboard → service → Environment → Add Environment Variable)
-      - key: DATABASE_URL
-        sync: false   # required — Supabase pooler URL (port 6543)
-
-      - key: SENTRY_DSN
-        sync: false   # optional — leave blank to disable Sentry
-
-      - key: BETTERSTACK_TOKEN
-        sync: false   # optional — leave blank to disable log shipping
-
-      - key: API_SECRET_KEY
-        sync: false   # optional — required to use write endpoints in prod
-
-      - key: FRONTEND_URL
-        sync: false   # required in prod — your Vercel domain
+      - key: MLFLOW_TRACKING_URI
+        value: mlruns
