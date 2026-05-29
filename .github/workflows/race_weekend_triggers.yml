@@ -17,8 +17,8 @@
 #   PREFECT_WORKSPACE_ID — Prefect Cloud workspace UUID
 #
 # Deployment names (set when you register flows in Prefect Cloud):
-#   post-qualifying-ingestion/default
-#   post-race-ingestion/default
+#   post_qualifying_ingestion/default
+#   post_race_ingestion/default
 #
 # Both jobs are idempotent — safe to run twice for the same round.
 
@@ -54,10 +54,10 @@ jobs:
         id: resolve
         run: |
           if [ "${{ inputs.event }}" = "post_qualifying" ]; then
-            echo "deployment=post-qualifying-ingestion/default" >> $GITHUB_OUTPUT
+            echo "deployment=post_qualifying_ingestion/default" >> $GITHUB_OUTPUT
             echo "flow_label=Post-Qualifying Ingestion" >> $GITHUB_OUTPUT
           else
-            echo "deployment=post-race-ingestion/default" >> $GITHUB_OUTPUT
+            echo "deployment=post_race_ingestion/default" >> $GITHUB_OUTPUT
             echo "flow_label=Post-Race Ingestion" >> $GITHUB_OUTPUT
           fi
 
