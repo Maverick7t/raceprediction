@@ -1,40 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* src/index.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ── Color system ───────────────────────────────── */
+:root {
+  --bg-base:        #09090E;
+  --bg-surface:     #13131C;
+  --bg-elevated:    #1A1A26;
+  --border-default: #1E1E2E;
+  --border-subtle:  #161620;
 
-/* ---- Base ---- */
-@layer base {
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
+  --text-primary:   #F0F0F5;
+  --text-secondary: #9090A8;
+  --text-muted:     #50506A;
 
-  html {
-    scroll-behavior: smooth;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  body {
-    background-color: #0B0B0F;
-    color: #F2F2F7;
-    font-family: 'Outfit', sans-serif;
-  }
-
-  /* Custom scrollbar */
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+  --accent-red:     #E8002D;
+  --accent-gold:    #FFD700;
+  --accent-silver:  #A8A8C0;
+  --accent-bronze:  #CD7F32;
 }
 
-/* ---- Utility classes ---- */
-@layer utilities {
-  .font-700 { font-weight: 700; }
-  .font-600 { font-weight: 600; }
-  .font-500 { font-weight: 500; }
+/* ── Base ───────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Barlow', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Typography helpers ─────────────────────────── */
+.font-display { font-family: 'Barlow Condensed', sans-serif; }
+.font-data    { font-family: 'DM Mono', monospace; }
+
+/* ── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar          { width: 4px; height: 4px; }
+::-webkit-scrollbar-track    { background: var(--bg-surface); }
+::-webkit-scrollbar-thumb    { background: #2A2A40; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-red); }
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ── Animations ─────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.35s ease forwards;
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease infinite;
+}
+
+/* Staggered fade-in for table rows */
+.row-stagger > *:nth-child(1)  { animation-delay: 0ms; }
+.row-stagger > *:nth-child(2)  { animation-delay: 30ms; }
+.row-stagger > *:nth-child(3)  { animation-delay: 60ms; }
+.row-stagger > *:nth-child(4)  { animation-delay: 90ms; }
+.row-stagger > *:nth-child(5)  { animation-delay: 120ms; }
+.row-stagger > *:nth-child(6)  { animation-delay: 150ms; }
+.row-stagger > *:nth-child(7)  { animation-delay: 180ms; }
+.row-stagger > *:nth-child(8)  { animation-delay: 210ms; }
+.row-stagger > *:nth-child(9)  { animation-delay: 240ms; }
+.row-stagger > *:nth-child(10) { animation-delay: 270ms; }
+.row-stagger > *:nth-child(n+11) { animation-delay: 300ms; }
+
+.row-stagger > * {
+  opacity: 0;
+  animation: fadeInUp 0.3s ease forwards;
 }
