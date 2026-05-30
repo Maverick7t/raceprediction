@@ -1,17 +1,14 @@
-// src/App.tsx
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Header } from '@/components/layout/Header';
-import { StatusBanner } from '@/components/layout/StatusBanner';
-import { PredictionsView } from '@/components/views/PredictionsView';
-import { StandingsView } from '@/components/views/StandingsView';
-import { HistoryView } from '@/components/views/HistoryView';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Layout } from './components/Layout';
+import { PredictionsPage } from './pages/PredictionsPage';
+import { StandingsPage } from './pages/StandingsPage';
+import { HistoryPage } from './pages/HistoryPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Show stale data immediately while refetching in background
-      // This prevents loading spinners on tab focus
+      retry: 2,
       refetchOnWindowFocus: false,
     },
   },
@@ -21,19 +18,15 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div className="min-h-screen bg-bg-primary font-body text-text-primary">
-          <Header />
-          <StatusBanner />
-          <main>
-            <Routes>
-              <Route path="/" element={<PredictionsView />} />
-              <Route path="/standings" element={<StandingsView />} />
-              <Route path="/history" element={<HistoryView />} />
-              {/* Catch-all → predictions */}
-              <Route path="*" element={<PredictionsView />} />
-            </Routes>
-          </main>
-        </div>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route index element={<Navigate to="/predictions" replace />} />
+            <Route path="/predictions" element={<PredictionsPage />} />
+            <Route path="/standings" element={<StandingsPage />} />
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="*" element={<Navigate to="/predictions" replace />} />
+          </Route>
+        </Routes>
       </BrowserRouter>
     </QueryClientProvider>
   );
