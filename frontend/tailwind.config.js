@@ -7,9 +7,11 @@ export default {
     theme: {
         extend: {
             fontFamily: {
+                display: ['Barlow Condensed', 'sans-serif'],
+                body: ['Barlow', 'sans-serif'],
+                mono: ['DM Mono', 'monospace'],
+                // Keep existing aliases so current components continue to render correctly.
                 heading: ['Rajdhani', 'sans-serif'],
-                body: ['Outfit', 'sans-serif'],
-                mono: ['JetBrains Mono', 'monospace'],
             },
             colors: {
                 // Core palette
