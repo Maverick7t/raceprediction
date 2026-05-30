@@ -46,7 +46,7 @@ def _get_client():
     if not url or not key:
         raise EnvironmentError(
             "SUPABASE_URL and SUPABASE_SERVICE_KEY must be set for model storage. "
-            "These are different from DATABASE_URL — get them from Supabase Dashboard → Settings → API."
+            "These are different from SUPABASE_URL — get them from Supabase Dashboard → Settings → API."
         )
     return create_client(url, key)
  
@@ -101,8 +101,8 @@ def download_model_artifacts(local_dir: Path) -> bool:
     """
     try:
         client = _get_client()
-    except Exception as e:
-        logger.error(f"Cannot connect to Supabase Storage for download: {e}")
+    except Exception:
+        logger.exception(f"Cannot connect to Supabase Storage: {e}")
         return False
  
     local_dir.mkdir(parents=True, exist_ok=True)
