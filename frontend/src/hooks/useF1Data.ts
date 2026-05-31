@@ -9,15 +9,7 @@
 // avoids unnecessary refetches on tab focus while keeping data reasonably fresh.
 
 import { useQuery } from '@tanstack/react-query';
-import {
-    fetchLatestPredictions,
-    fetchPredictionsByRace,
-    fetchPredictionRaces,
-    fetchDriverStandings,
-    fetchConstructorStandings,
-    fetchHealthDb,
-    fetchHealthModel,
-} from '@/api/client';
+import { api } from '@/api/client';
 
 // ---------------------------------------------------------------------------
 // Predictions
@@ -26,7 +18,7 @@ import {
 export function useLatestPredictions() {
     return useQuery({
         queryKey: ['predictions', 'latest'],
-        queryFn: fetchLatestPredictions,
+        queryFn: api.getLatestPredictions,
         staleTime: 5 * 60 * 1000,   // 5 minutes
         gcTime: 30 * 60 * 1000,     // 30 minutes
         retry: 2,
@@ -36,7 +28,7 @@ export function useLatestPredictions() {
 export function usePredictionsByRace(raceKey: string | null) {
     return useQuery({
         queryKey: ['predictions', raceKey],
-        queryFn: () => fetchPredictionsByRace(raceKey!),
+        queryFn: () => api.getPredictions(raceKey!),
         enabled: !!raceKey,
         staleTime: 5 * 60 * 1000,
         gcTime: 30 * 60 * 1000,
@@ -47,7 +39,7 @@ export function usePredictionsByRace(raceKey: string | null) {
 export function usePredictionRaces() {
     return useQuery({
         queryKey: ['predictions', 'races'],
-        queryFn: fetchPredictionRaces,
+        queryFn: api.getPredictionRaces,
         staleTime: 10 * 60 * 1000,  // race list changes rarely
         gcTime: 60 * 60 * 1000,
         retry: 2,
@@ -61,7 +53,7 @@ export function usePredictionRaces() {
 export function useDriverStandings(year: number) {
     return useQuery({
         queryKey: ['standings', 'drivers', year],
-        queryFn: () => fetchDriverStandings(year),
+        queryFn: () => api.getDriverStandings(year),
         staleTime: 10 * 60 * 1000,
         gcTime: 60 * 60 * 1000,
         retry: 2,
@@ -71,7 +63,7 @@ export function useDriverStandings(year: number) {
 export function useConstructorStandings(year: number) {
     return useQuery({
         queryKey: ['standings', 'constructors', year],
-        queryFn: () => fetchConstructorStandings(year),
+        queryFn: () => api.getConstructorStandings(year),
         staleTime: 10 * 60 * 1000,
         gcTime: 60 * 60 * 1000,
         retry: 2,
@@ -85,7 +77,7 @@ export function useConstructorStandings(year: number) {
 export function useSystemHealth() {
     const db = useQuery({
         queryKey: ['health', 'db'],
-        queryFn: fetchHealthDb,
+        queryFn: api.getHealthDb,
         staleTime: 60 * 1000,       // re-check every minute
         gcTime: 5 * 60 * 1000,
         retry: 1,
@@ -93,7 +85,7 @@ export function useSystemHealth() {
 
     const model = useQuery({
         queryKey: ['health', 'model'],
-        queryFn: fetchHealthModel,
+        queryFn: api.getHealthModel,
         staleTime: 5 * 60 * 1000,
         gcTime: 30 * 60 * 1000,
         retry: 1,
