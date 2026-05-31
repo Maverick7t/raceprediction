@@ -45,7 +45,7 @@ OPTIONAL_QUALI_COLUMNS = {
     "best_lap_seconds": None,
 }
 
-def backfill(from_year: int = 2018, to_year: int = 2024) -> None:
+def backfill(from_year: int = 2018, to_year: int = 2025) -> None:
     logger.info(f"Backfill started from_year={from_year} to_year={to_year}")
  
     total_qualifying = 0
