@@ -6,7 +6,7 @@ import { TeamBadge } from '../components/TeamBadge';
 import { ProbabilityBar } from '../components/ProbabilityBar';
 import { LoadingState, ErrorState, EmptyState } from '../components/LoadingError';
 import { getTeamTheme } from '../utils/teamColors';
-import { formatDate, countryFlag, ordinal } from '../utils/format';
+import { ordinal } from '../utils/format';
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2];
@@ -30,9 +30,9 @@ function RaceRow({ race }: { race: RaceListItem }) {
                 className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-white/5"
                 style={{ background: 'var(--bg-surface)' }}
             >
-                {/* Round + flag */}
-                <div className="flex items-center gap-2 w-16 shrink-0">
-                    <span className="text-base leading-none">{countryFlag(race.country ?? race.race_name)}</span>
+                {/* Round */}
+                <div className="flex items-center gap-2 w-20 shrink-0">
+                    <span className="font-mono text-[10px] text-[var(--text-muted)]">{race.year}</span>
                     <span className="font-mono text-[10px] text-[var(--text-muted)]">R{race.round}</span>
                 </div>
 
@@ -42,7 +42,7 @@ function RaceRow({ race }: { race: RaceListItem }) {
                         {race.race_name}
                     </div>
                     <div className="font-mono text-[10px] text-[var(--text-muted)]">
-                        {formatDate(race.race_date)}
+                        {race.circuit_id}
                     </div>
                 </div>
 
@@ -56,7 +56,7 @@ function RaceRow({ race }: { race: RaceListItem }) {
                             color: 'var(--text-muted)',
                         }}
                     >
-                        ML data
+                        Predictions
                     </span>
                 )}
 
@@ -85,33 +85,22 @@ function RaceRow({ race }: { race: RaceListItem }) {
                         <EmptyState label="No predictions stored" />
                     ) : (
                         <div className="flex flex-col gap-px p-2">
-                            {/* Mini table header */}
-                            <div
-                                className="hidden sm:grid text-[9px] font-mono uppercase tracking-widest text-[var(--text-muted)] px-2 pb-1"
-                                style={{ gridTemplateColumns: '1.5rem 1fr 5rem 1fr 1fr 3rem 3rem' }}
-                            >
-                                <span />
-                                <span>Driver</span>
-                                <span>Team</span>
-                                <span>Win prob</span>
-                                <span>Podium prob</span>
-                                <span>Pred</span>
-                                <span>Result</span>
+                            <div className="flex items-center justify-between px-2 pb-1 text-[9px] font-mono uppercase tracking-widest text-[var(--text-muted)]">
+                                <span>{data.model_version}</span>
+                                <span>{data.generated_at}</span>
                             </div>
 
                             {[...data.predictions]
-                                .sort((a, b) => (b.win_probability - a.win_probability))
+                                .sort((a, b) => a.predicted_rank - b.predicted_rank)
                                 .map((p, i) => {
                                     const theme = getTeamTheme(p.team_id);
-                                    const correct =
-                                        p.actual_finish != null && p.actual_finish === p.predicted_finish;
 
                                     return (
                                         <div
                                             key={p.driver_code}
                                             className="flex sm:grid items-center gap-2 px-2 py-2 rounded-sm"
                                             style={{
-                                                gridTemplateColumns: '1.5rem 1fr 5rem 1fr 1fr 3rem 3rem',
+                                                gridTemplateColumns: '1.5rem 1fr 5rem 1fr 1fr 3rem 4rem',
                                                 background: i % 2 === 0 ? 'var(--bg-surface)' : 'transparent',
                                             }}
                                         >
@@ -135,33 +124,24 @@ function RaceRow({ race }: { race: RaceListItem }) {
 
                                             {/* Win bar */}
                                             <div className="hidden sm:block pr-3">
-                                                <ProbabilityBar value={p.win_probability} color={theme.primary} height={3} />
+                                                <ProbabilityBar value={p.predicted_winner_prob} color={theme.primary} height={3} />
                                             </div>
 
                                             {/* Podium bar */}
                                             <div className="hidden sm:block pr-3">
-                                                <ProbabilityBar value={p.podium_probability} color={theme.primary} height={3} />
+                                                <ProbabilityBar value={p.predicted_podium_prob} color={theme.primary} height={3} />
                                             </div>
 
-                                            {/* Predicted finish */}
+                                            {/* Predicted rank */}
                                             <div className="font-mono text-[10px] text-[var(--text-muted)] text-right shrink-0">
-                                                {ordinal(p.predicted_finish)}
+                                                {ordinal(p.predicted_rank)}
                                             </div>
 
-                                            {/* Actual finish */}
+                                            {/* Qualifying position */}
                                             <div className="text-right shrink-0">
-                                                {p.actual_finish != null ? (
-                                                    <span
-                                                        className="font-display font-bold text-xs"
-                                                        style={{
-                                                            color: correct ? '#22C55E' : 'var(--text-secondary)',
-                                                        }}
-                                                    >
-                                                        {ordinal(p.actual_finish)}
-                                                    </span>
-                                                ) : (
-                                                    <span className="font-mono text-[10px] text-[var(--text-muted)]">—</span>
-                                                )}
+                                                <span className="font-mono text-[10px] text-[var(--text-muted)]">
+                                                    Q{p.qualifying_position ?? '—'}
+                                                </span>
                                             </div>
                                         </div>
                                     );
@@ -185,10 +165,9 @@ export function HistoryPage() {
 
     const filtered = (races ?? [])
         .filter((r) => {
-            const d = new Date(r.race_date);
-            return d.getFullYear() === year && new Date(r.race_date) <= new Date();
+            return r.year === year;
         })
-        .sort((a, b) => new Date(b.race_date).getTime() - new Date(a.race_date).getTime());
+        .sort((a, b) => b.round - a.round);
 
     return (
         <div className="max-w-3xl mx-auto w-full px-4 py-6">
@@ -197,10 +176,10 @@ export function HistoryPage() {
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
                 <div>
                     <h1 className="font-display font-bold text-2xl sm:text-3xl text-[var(--text-primary)] tracking-wide">
-                        Race History
+                        Prediction History
                     </h1>
                     <p className="font-mono text-[10px] text-[var(--text-muted)] mt-0.5">
-                        Click a race to see stored predictions vs actual results
+                        Click a race to see stored prediction snapshots
                     </p>
                 </div>
 
@@ -227,7 +206,7 @@ export function HistoryPage() {
             ) : error ? (
                 <ErrorState error={error as Error} />
             ) : filtered.length === 0 ? (
-                <EmptyState label={`No completed races found for ${year}`} />
+                <EmptyState label={`No races found for ${year}`} />
             ) : (
                 <div className="flex flex-col gap-1">
                     {filtered.map((race) => (
