@@ -1,13 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
-import type { RacePrediction } from '../types/api';
+import type { RacePrediction, RaceListItem } from '../types/api';
 import { RaceSelector } from '../components/RaceSelector';
 import { ProbabilityBar } from '../components/ProbabilityBar';
 import { TeamBadge, TeamAccent } from '../components/TeamBadge';
 import { LoadingState, ErrorState, EmptyState } from '../components/LoadingError';
 import { getTeamTheme } from '../utils/teamColors';
-import { formatDate, formatProbability, ordinal, isPast } from '../utils/format';
+import { ordinal } from '../utils/format';
 
 // Medal color for top 3 finishers
 function positionColor(pos: number) {
@@ -17,30 +17,29 @@ function positionColor(pos: number) {
     return 'var(--text-muted)';
 }
 
-type SortKey = 'predicted_finish' | 'win_probability' | 'podium_probability' | 'qualifying_position';
+type SortKey = 'predicted_rank' | 'predicted_winner_prob' | 'predicted_podium_prob' | 'qualifying_position';
 
 export function PredictionsPage() {
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
-    const [sortBy, setSortBy] = useState<SortKey>('win_probability');
+    const [sortBy, setSortBy] = useState<SortKey>('predicted_rank');
 
     // Race list
     const { data: races, isLoading: racesLoading, error: racesError } = useQuery({
         queryKey: ['prediction-races'],
         queryFn: api.getPredictionRaces,
         staleTime: 5 * 60_000,
-        onSuccess: (data) => {
-            if (!selectedKey && data.length > 0) {
-                // Auto-select most recent race with predictions
-                const withPreds = data.filter((r) => r.has_predictions);
-                if (withPreds.length > 0) {
-                    const sorted = [...withPreds].sort((a, b) =>
-                        new Date(b.race_date).getTime() - new Date(a.race_date).getTime()
-                    );
-                    setSelectedKey(sorted[0].race_key);
-                }
-            }
-        },
     } as any);
+
+    useEffect(() => {
+        if (!selectedKey && races && races.length > 0) {
+            setSelectedKey(races[0].race_key);
+        }
+    }, [races, selectedKey]);
+
+    const selectedRace = useMemo<RaceListItem | null>(
+        () => races?.find((race) => race.race_key === selectedKey) ?? null,
+        [races, selectedKey],
+    );
 
     // Predictions for selected race
     const { data: raceData, isLoading: predLoading, error: predError } = useQuery({
@@ -55,14 +54,12 @@ export function PredictionsPage() {
         if (!raceData?.predictions) return [];
         const list = [...raceData.predictions];
         list.sort((a, b) => {
-            if (sortBy === 'predicted_finish') return a.predicted_finish - b.predicted_finish;
-            if (sortBy === 'qualifying_position') return a.qualifying_position - b.qualifying_position;
+            if (sortBy === 'predicted_rank') return a.predicted_rank - b.predicted_rank;
+            if (sortBy === 'qualifying_position') return (a.qualifying_position ?? 99) - (b.qualifying_position ?? 99);
             return (b[sortBy] as number) - (a[sortBy] as number);
         });
         return list;
     }, [raceData, sortBy]);
-
-    const isCompleted = raceData?.race_date ? isPast(raceData.race_date) : false;
 
     // ── Render ─────────────────────────────────────
     return (
@@ -87,29 +84,29 @@ export function PredictionsPage() {
             <div className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
 
                 {/* Race header */}
-                {raceData && (
+                {raceData && selectedRace && (
                     <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6 animate-fade-in-up">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <span
                                     className="font-mono text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-sm"
                                     style={{
-                                        background: isCompleted ? 'var(--bg-elevated)' : 'var(--accent-red)20',
-                                        color: isCompleted ? 'var(--text-muted)' : 'var(--accent-red)',
-                                        border: `1px solid ${isCompleted ? 'var(--border-default)' : 'var(--accent-red)40'}`,
+                                        background: 'var(--bg-elevated)',
+                                        color: 'var(--text-muted)',
+                                        border: '1px solid var(--border-default)',
                                     }}
                                 >
-                                    {isCompleted ? 'Completed' : 'Upcoming'}
+                                    Prediction snapshot
                                 </span>
                                 <span className="font-mono text-[10px] text-[var(--text-muted)]">
-                                    Round {raceData.round} · {raceData.season}
+                                    {selectedRace.year} · Round {selectedRace.round}
                                 </span>
                             </div>
                             <h1 className="font-display font-bold text-2xl sm:text-3xl text-[var(--text-primary)] tracking-wide">
-                                {raceData.race_name}
+                                {selectedRace.race_name}
                             </h1>
                             <p className="font-mono text-xs text-[var(--text-muted)] mt-0.5">
-                                {formatDate(raceData.race_date)} · Model generated {formatDate(raceData.generated_at)}
+                                {selectedRace.circuit_id} · Generated {raceData.generated_at}
                             </p>
                         </div>
 
@@ -117,9 +114,9 @@ export function PredictionsPage() {
                         <div className="flex items-center gap-1">
                             {(
                                 [
-                                    { key: 'win_probability', label: 'Win %' },
-                                    { key: 'podium_probability', label: 'Podium %' },
-                                    { key: 'predicted_finish', label: 'Pred. Pos' },
+                                    { key: 'predicted_winner_prob', label: 'Winner %' },
+                                    { key: 'predicted_podium_prob', label: 'Podium %' },
+                                    { key: 'predicted_rank', label: 'Rank' },
                                     { key: 'qualifying_position', label: 'Grid' },
                                 ] as { key: SortKey; label: string }[]
                             ).map(({ key, label }) => (
@@ -155,16 +152,13 @@ export function PredictionsPage() {
                             <span>#</span>
                             <span>Driver</span>
                             <span>Team</span>
-                            <span>Win prob</span>
+                            <span>Winner prob</span>
                             <span>Podium prob</span>
-                            <span className="text-right">
-                                {isCompleted ? 'Result' : 'Grid'}
-                            </span>
+                            <span className="text-right">Rank / Grid</span>
                         </div>
 
                         {sorted.map((p, idx) => {
                             const theme = getTeamTheme(p.team_id);
-                            const showActual = isCompleted && p.actual_finish != null;
 
                             return (
                                 <div
@@ -204,40 +198,37 @@ export function PredictionsPage() {
 
                                     {/* Win probability */}
                                     <div className="hidden sm:block pr-4">
-                                        <ProbabilityBar value={p.win_probability} color={theme.primary} height={4} />
+                                        <ProbabilityBar value={p.predicted_winner_prob} color={theme.primary} height={4} />
                                     </div>
 
                                     {/* Podium probability */}
                                     <div className="hidden sm:block pr-4">
-                                        <ProbabilityBar value={p.podium_probability} color={theme.primary} height={4} />
+                                        <ProbabilityBar value={p.predicted_podium_prob} color={theme.primary} height={4} />
                                     </div>
 
                                     {/* Mobile probability summary */}
                                     <div className="flex-1 flex flex-col gap-1 sm:hidden">
                                         <div className="flex items-center gap-1">
                                             <span className="font-mono text-[9px] text-[var(--text-muted)] w-8">WIN</span>
-                                            <ProbabilityBar value={p.win_probability} color={theme.primary} height={3} />
+                                            <ProbabilityBar value={p.predicted_winner_prob} color={theme.primary} height={3} />
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <span className="font-mono text-[9px] text-[var(--text-muted)] w-8">POD</span>
-                                            <ProbabilityBar value={p.podium_probability} color={theme.primary} height={3} />
+                                            <ProbabilityBar value={p.predicted_podium_prob} color={theme.primary} height={3} />
                                         </div>
                                     </div>
 
-                                    {/* Result / Grid */}
+                                    {/* Rank / Grid */}
                                     <div className="text-right shrink-0">
-                                        {showActual ? (
-                                            <span
-                                                className="font-display font-bold text-base"
-                                                style={{ color: positionColor(p.actual_finish!) }}
-                                            >
-                                                {ordinal(p.actual_finish!)}
-                                            </span>
-                                        ) : (
-                                            <span className="font-mono text-xs text-[var(--text-muted)]">
-                                                P{p.qualifying_position}
-                                            </span>
-                                        )}
+                                        <div
+                                            className="font-display font-bold text-base"
+                                            style={{ color: positionColor(p.predicted_rank) }}
+                                        >
+                                            {ordinal(p.predicted_rank)}
+                                        </div>
+                                        <div className="font-mono text-[10px] text-[var(--text-muted)]">
+                                            Q{p.qualifying_position ?? '—'}
+                                        </div>
                                     </div>
                                 </div>
                             );
