@@ -4,10 +4,6 @@ import { api } from '../api/client';
 import { TeamBadge } from '../components/TeamBadge';
 import { LoadingState, ErrorState } from '../components/LoadingError';
 import { getTeamTheme } from '../utils/teamColors';
-import { formatDate } from '../utils/format';
-
-const CURRENT_YEAR = new Date().getFullYear();
-const YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2];
 
 type Tab = 'drivers' | 'constructors';
 
@@ -52,32 +48,30 @@ function PositionBadge({ pos }: { pos: number }) {
 
 export function StandingsPage() {
     const [tab, setTab] = useState<Tab>('drivers');
-    const [year, setYear] = useState(CURRENT_YEAR);
+    const [year, setYear] = useState<number | null>(null);
 
     const driverQuery = useQuery({
-        queryKey: ['standings-drivers', year],
-        queryFn: () => api.getDriverStandings(year),
+        queryKey: ['standings-drivers', year ?? 'latest'],
+        queryFn: () => api.getDriverStandings(year ?? undefined),
         staleTime: 10 * 60_000,
         enabled: tab === 'drivers',
     });
 
     const constructorQuery = useQuery({
-        queryKey: ['standings-constructors', year],
-        queryFn: () => api.getConstructorStandings(year),
+        queryKey: ['standings-constructors', year ?? 'latest'],
+        queryFn: () => api.getConstructorStandings(year ?? undefined),
         staleTime: 10 * 60_000,
         enabled: tab === 'constructors',
     });
 
     const driverData = driverQuery.data;
     const constructorData = constructorQuery.data;
+    const resolvedYear = year ?? driverData?.year ?? constructorData?.year ?? new Date().getFullYear();
+    const years = [resolvedYear, resolvedYear - 1, resolvedYear - 2];
 
     const activeQuery = tab === 'drivers' ? driverQuery : constructorQuery;
-    const lastUpdated = tab === 'drivers'
-        ? driverData?.last_updated
-        : constructorData?.last_updated;
-
-    const drivers = driverData?.drivers ?? [];
-    const constructors = constructorData?.constructors ?? [];
+    const drivers = driverData?.standings ?? [];
+    const constructors = constructorData?.standings ?? [];
 
     const maxDriverPts = Math.max(...drivers.map((d) => d.points), 1);
     const maxConstructorPts = Math.max(...constructors.map((c) => c.points), 1);
@@ -91,16 +85,14 @@ export function StandingsPage() {
                     <h1 className="font-display font-bold text-2xl sm:text-3xl text-[var(--text-primary)] tracking-wide">
                         Championship
                     </h1>
-                    {lastUpdated && (
-                        <p className="font-mono text-[10px] text-[var(--text-muted)] mt-0.5">
-                            Last synced {formatDate(lastUpdated)}
-                        </p>
-                    )}
+                    <p className="font-mono text-[10px] text-[var(--text-muted)] mt-0.5">
+                        Season {resolvedYear}
+                    </p>
                 </div>
 
                 {/* Year picker */}
                 <div className="flex gap-1">
-                    {YEARS.map((y) => (
+                    {years.map((y) => (
                         <button
                             key={y}
                             onClick={() => setYear(y)}
@@ -142,7 +134,7 @@ export function StandingsPage() {
             ) : tab === 'drivers' ? (
                 <div className="flex flex-col gap-px row-stagger">
                     {drivers.map((d) => {
-                        const theme = getTeamTheme(d.team_id);
+                        const theme = getTeamTheme(d.team);
                         return (
                             <div
                                 key={d.driver_code}
@@ -171,7 +163,7 @@ export function StandingsPage() {
                                 </div>
 
                                 {/* Team badge */}
-                                <TeamBadge teamId={d.team_id} size="sm" />
+                                <TeamBadge teamId={d.team} size="sm" />
 
                                 {/* Points bar */}
                                 <PointsBar points={d.points} max={maxDriverPts} />
@@ -189,10 +181,10 @@ export function StandingsPage() {
             ) : (
                 <div className="flex flex-col gap-px row-stagger">
                     {constructors.map((c) => {
-                        const theme = getTeamTheme(c.constructor_id);
+                        const theme = getTeamTheme(c.team_id);
                         return (
                             <div
-                                key={c.constructor_id}
+                                key={c.team_id}
                                 className="flex items-center gap-3 px-3 py-3 rounded-sm"
                                 style={{
                                     background: 'var(--bg-surface)',
@@ -206,10 +198,10 @@ export function StandingsPage() {
                                 <PositionBadge pos={c.position} />
                                 <div className="flex-1 min-w-0">
                                     <div className="font-display font-bold text-sm text-[var(--text-primary)] leading-tight">
-                                        {c.constructor_name}
+                                        {c.team}
                                     </div>
                                 </div>
-                                <TeamBadge teamId={c.constructor_id} size="sm" />
+                                <TeamBadge teamId={c.team_id} size="sm" />
                                 <PointsBar points={c.points} max={maxConstructorPts} />
                                 <div className="text-right shrink-0 w-12">
                                     <div className="font-mono text-xs text-[var(--text-muted)]">
