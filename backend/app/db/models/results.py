@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
     BigInteger,
     CheckConstraint,
+    Date,
     Float,
     Index,
     SmallInteger,
@@ -107,6 +108,11 @@ class ResultsRaw(Base):
         TIMESTAMP(timezone=True),
         nullable=False,
         server_default=func.now(),
+    )
+
+    race_date: Mapped[date | None] = mapped_column(
+        Date,
+        nullable=True,
     )
 
     __table_args__ = (
