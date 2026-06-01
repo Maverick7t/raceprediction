@@ -94,14 +94,14 @@ export function PredictionsPage() {
                             const teamTheme = getTeamTheme(topPrediction.team_id || '');
 
                             return (
-                        <HeroRaceCard
-                            raceName={selectedRace.race_name}
-                            round={selectedRace.round}
-                            raceDate={raceData.generated_at}
-                            winner={topPrediction.driver_name || topPrediction.driver_code}
-                            team={teamTheme.name}
-                            probability={Math.round((topPrediction.predicted_winner_prob || 0) * 100)}
-                        />
+                                <HeroRaceCard
+                                    raceName={selectedRace.race_name}
+                                    round={selectedRace.round}
+                                    raceDate={raceData.generated_at}
+                                    winner={topPrediction.driver_name || topPrediction.driver_code}
+                                    team={teamTheme.name}
+                                    probability={Math.round((topPrediction.predicted_winner_prob || 0) * 100)}
+                                />
                             );
                         })()}
                     </div>
