@@ -73,12 +73,12 @@ class RawDataRepository:
                 race_key, driver_code, driver_id, driver_name,
                 team, team_id, position, q1_time, q2_time, q3_time,
                 best_lap_seconds, year, round, race_name, circuit_id,
-                source, ingested_at
+                race_date, source, ingested_at
             ) VALUES (
                 :race_key, :driver_code, :driver_id, :driver_name,
                 :team, :team_id, :position, :q1_time, :q2_time, :q3_time,
                 :best_lap_seconds, :year, :round, :race_name, :circuit_id,
-                :source, :ingested_at
+                :race_date, :source, :ingested_at
             )
             ON CONFLICT (race_key, driver_code)
             DO UPDATE SET
@@ -89,6 +89,7 @@ class RawDataRepository:
                 best_lap_seconds = EXCLUDED.best_lap_seconds,
                 team             = EXCLUDED.team,
                 source           = EXCLUDED.source,
+                race_date        = EXCLUDED.race_date,
                 ingested_at      = EXCLUDED.ingested_at
         """)
  
@@ -115,12 +116,12 @@ class RawDataRepository:
                 race_key, driver_code, driver_id, driver_name,
                 team, team_id, grid_position, finish_position,
                 points, status, year, round, race_name,
-                circuit_id, source, ingested_at
+                circuit_id, race_date, source, ingested_at
             ) VALUES (
                 :race_key, :driver_code, :driver_id, :driver_name,
                 :team, :team_id, :grid_position, :finish_position,
                 :points, :status, :year, :round, :race_name,
-                :circuit_id, :source, :ingested_at
+                :circuit_id, :race_date, :source, :ingested_at
             )
             ON CONFLICT (race_key, driver_code)
             DO UPDATE SET
@@ -130,6 +131,7 @@ class RawDataRepository:
                 status          = EXCLUDED.status,
                 team            = EXCLUDED.team,
                 source          = EXCLUDED.source,
+                race_date       = EXCLUDED.race_date,
                 ingested_at     = EXCLUDED.ingested_at
         """)
  
