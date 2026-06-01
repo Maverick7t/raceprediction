@@ -21,8 +21,8 @@ export default function HeroRaceCard({
     probability >= 80
       ? "High"
       : probability >= 60
-      ? "Medium"
-      : "Low";
+        ? "Medium"
+        : "Low";
 
   return (
     <div className="relative w-full max-w-2xl mx-auto overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 shadow-2xl">
