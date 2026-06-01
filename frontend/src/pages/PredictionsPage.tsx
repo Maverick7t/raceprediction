@@ -8,6 +8,9 @@ import { TeamBadge, TeamAccent } from '../components/TeamBadge';
 import { LoadingState, ErrorState, EmptyState } from '../components/LoadingError';
 import { getTeamTheme } from '../utils/teamColors';
 import { ordinal } from '../utils/format';
+import HeroRaceCard from '../components/HeroRaceCard';
+import PredictionGrid from '../components/PredictionGrid';
+import ProbabilitySection from '../components/ProbabilitySection';
 
 // Medal color for top 3 finishers
 function positionColor(pos: number) {
@@ -83,6 +86,20 @@ export function PredictionsPage() {
             {/* ── Main content ─────────────────────────── */}
             <div className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
 
+                {/* Hero Race Card */}
+                {raceData && selectedRace && raceData.predictions && raceData.predictions.length > 0 && (
+                    <div className="mb-12 animate-fade-in-up">
+                        <HeroRaceCard
+                            raceName={selectedRace.race_name}
+                            round={selectedRace.round}
+                            raceDate={selectedRace.race_date}
+                            winner={raceData.predictions[0].driver_number?.toString() || 'TBD'}
+                            team={raceData.predictions[0].team || 'TBD'}
+                            probability={Math.round(raceData.predictions[0].predicted_winner_prob || 0)}
+                        />
+                    </div>
+                )}
+
                 {/* Race header */}
                 {raceData && selectedRace && (
                     <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6 animate-fade-in-up">
@@ -135,7 +152,7 @@ export function PredictionsPage() {
                     </div>
                 )}
 
-                {/* Prediction table */}
+                {/* Prediction Grid */}
                 {predLoading ? (
                     <LoadingState label="Fetching predictions…" />
                 ) : predError ? (
@@ -143,96 +160,10 @@ export function PredictionsPage() {
                 ) : sorted.length === 0 ? (
                     <EmptyState label="No predictions for this race" />
                 ) : (
-                    <div className="flex flex-col gap-px row-stagger">
-                        {/* Column headers */}
-                        <div
-                            className="hidden sm:grid text-[10px] font-mono uppercase tracking-widest text-[var(--text-muted)] px-3 pb-2"
-                            style={{ gridTemplateColumns: '2rem 1fr 6rem 1fr 1fr 4rem' }}
-                        >
-                            <span>#</span>
-                            <span>Driver</span>
-                            <span>Team</span>
-                            <span>Winner prob</span>
-                            <span>Podium prob</span>
-                            <span className="text-right">Rank / Grid</span>
-                        </div>
+                    <div className="space-y-12">
+                        <PredictionGrid predictions={sorted} />
 
-                        {sorted.map((p, idx) => {
-                            const theme = getTeamTheme(p.team_id);
-
-                            return (
-                                <div
-                                    key={p.driver_code}
-                                    className="flex sm:grid items-center gap-3 sm:gap-0 px-3 py-3 rounded-sm"
-                                    style={{
-                                        gridTemplateColumns: '2rem 1fr 6rem 1fr 1fr 4rem',
-                                        background: 'var(--bg-surface)',
-                                        border: '1px solid var(--border-subtle)',
-                                    }}
-                                >
-                                    {/* Team color accent (mobile) */}
-                                    <TeamAccent teamId={p.team_id} />
-
-                                    {/* Rank */}
-                                    <span
-                                        className="font-display font-bold text-base w-8 shrink-0"
-                                        style={{ color: positionColor(idx + 1) }}
-                                    >
-                                        {idx + 1}
-                                    </span>
-
-                                    {/* Driver */}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-display font-bold text-sm text-[var(--text-primary)] leading-tight">
-                                            {p.driver_name ?? p.driver_code}
-                                        </div>
-                                        <div className="font-mono text-[10px] text-[var(--text-muted)]">
-                                            {p.driver_code}
-                                        </div>
-                                    </div>
-
-                                    {/* Team badge */}
-                                    <div className="hidden sm:flex">
-                                        <TeamBadge teamId={p.team_id} size="sm" />
-                                    </div>
-
-                                    {/* Win probability */}
-                                    <div className="hidden sm:block pr-4">
-                                        <ProbabilityBar value={p.predicted_winner_prob} color={theme.primary} height={4} />
-                                    </div>
-
-                                    {/* Podium probability */}
-                                    <div className="hidden sm:block pr-4">
-                                        <ProbabilityBar value={p.predicted_podium_prob} color={theme.primary} height={4} />
-                                    </div>
-
-                                    {/* Mobile probability summary */}
-                                    <div className="flex-1 flex flex-col gap-1 sm:hidden">
-                                        <div className="flex items-center gap-1">
-                                            <span className="font-mono text-[9px] text-[var(--text-muted)] w-8">WIN</span>
-                                            <ProbabilityBar value={p.predicted_winner_prob} color={theme.primary} height={3} />
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <span className="font-mono text-[9px] text-[var(--text-muted)] w-8">POD</span>
-                                            <ProbabilityBar value={p.predicted_podium_prob} color={theme.primary} height={3} />
-                                        </div>
-                                    </div>
-
-                                    {/* Rank / Grid */}
-                                    <div className="text-right shrink-0">
-                                        <div
-                                            className="font-display font-bold text-base"
-                                            style={{ color: positionColor(p.predicted_rank) }}
-                                        >
-                                            {ordinal(p.predicted_rank)}
-                                        </div>
-                                        <div className="font-mono text-[10px] text-[var(--text-muted)]">
-                                            Q{p.qualifying_position ?? '—'}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                        <ProbabilitySection predictions={sorted} />
                     </div>
                 )}
             </div>
