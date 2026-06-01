@@ -64,15 +64,9 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS
-allowed_origins = (
-    ["*"]
-    if config.ENVIRONMENT == "dev"
-    else [os.environ.get("FRONTEND_URL", "https://your-vercel-app.vercel.app")]
-)
-# Remove your current hardcoded origins list and replace with:
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=config.cors_origins,   # ← uses config, not a hardcoded list
+    allow_origins=config.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
