@@ -5,39 +5,46 @@ export default {
         "./src/**/*.{js,ts,jsx,tsx}",
     ],
     theme: {
+        colors: {
+            transparent: 'transparent',
+            current: 'currentColor',
+            white: '#ffffff',
+            black: '#000000',
+            slate: {
+                50: '#f8fafc',
+                100: '#f1f5f9',
+                200: '#e2e8f0',
+                300: '#cbd5e1',
+                400: '#94a3b8',
+                500: '#64748b',
+                600: '#475569',
+                700: '#334155',
+                800: '#1e293b',
+                900: '#0f172a',
+            },
+            cyan: {
+                300: '#06b6d4',
+                400: '#06b6d4',
+                500: '#06b6d4',
+            },
+            // Core palette
+            gold: '#FFD700',
+            silver: '#C0C0C0',
+            bronze: '#CD7F32',
+        },
+        fontFamily: {
+            display: ['Barlow Condensed', 'sans-serif'],
+            barlow: ['Barlow Condensed', 'sans-serif'],
+            body: ['Barlow', 'sans-serif'],
+            mono: ['DM Mono', 'monospace'],
+            heading: ['Rajdhani', 'sans-serif'],
+        },
         extend: {
-            fontFamily: {
-                display: ['Barlow Condensed', 'sans-serif'],
-                body: ['Barlow', 'sans-serif'],
-                mono: ['DM Mono', 'monospace'],
-                // Keep existing aliases so current components continue to render correctly.
-                heading: ['Rajdhani', 'sans-serif'],
-            },
-            colors: {
-                // Core palette
-                'bg-primary': '#0B0B0F',
-                'bg-surface': '#0E0E14',
-                'bg-elevated': '#13131A',
-                // Borders
-                'border-subtle': 'rgba(255,255,255,0.08)',
-                'border-default': 'rgba(255,255,255,0.12)',
-                'border-strong': 'rgba(255,255,255,0.20)',
-                // Text
-                'text-primary': '#F2F2F7',
-                'text-secondary': '#A8A8B6',
-                'text-muted': '#6B6B7F',
-                // Accent
-                'f1-red': '#E10600',
-                'f1-red-dim': 'rgba(225,6,0,0.15)',
-                // Podium
-                'gold': '#FFD700',
-                'silver': '#C0C0C0',
-                'bronze': '#CD7F32',
-            },
             animation: {
                 'fill-bar': 'fillBar 0.8s ease-out forwards',
                 'fade-in': 'fadeIn 0.4s ease-out',
                 'slide-up': 'slideUp 0.4s ease-out',
+                'fade-in-up': 'fadeInUp 0.6s ease-out',
             },
             keyframes: {
                 fillBar: {
@@ -50,6 +57,10 @@ export default {
                 },
                 slideUp: {
                     from: { opacity: '0', transform: 'translateY(12px)' },
+                    to: { opacity: '1', transform: 'translateY(0)' },
+                },
+                fadeInUp: {
+                    from: { opacity: '0', transform: 'translateY(16px)' },
                     to: { opacity: '1', transform: 'translateY(0)' },
                 },
             },
