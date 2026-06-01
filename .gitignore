@@ -79,3 +79,6 @@ backend/mlruns/
 # Keep production model artifacts in git (used by inference at runtime)
 !backend/models/
 !backend/models/**
+ 
+# Node/Vite local caches
+node_modules/.vite/
