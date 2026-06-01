@@ -24,7 +24,7 @@ export default function ProbabilitySection({
       <div className="space-y-4">
         {predictions.slice(0, 10).map((driver) => {
           const theme = getTeamTheme(driver.team_id || "");
-          const probability = Math.round(driver.predicted_winner_prob || 0);
+          const probability = Math.round((driver.predicted_winner_prob || 0) * 100);
 
           return (
             <div
