@@ -1,8 +1,8 @@
 {
   "model_version": "baseline_v1",
   "feature_version": "v1",
-  "data_cutoff_timestamp": "2026-05-26T12:14:51.125557+00:00",
-  "training_dataset_hash": "17171225853229893580",
+  "data_cutoff_timestamp": "2026-05-30T12:37:21.418013+00:00",
+  "training_dataset_hash": "17123927774732694788",
   "feature_columns": [
     "avg_finish_last_5",
     "avg_quali_last_5",
@@ -45,7 +45,9 @@
       "AIT",
       "ALB",
       "ALO",
+      "ANT",
       "BEA",
+      "BOR",
       "BOT",
       "COL",
       "DEV",
@@ -55,6 +57,7 @@
       "GAS",
       "GIO",
       "GRO",
+      "HAD",
       "HAM",
       "HAR",
       "HUL",
@@ -140,8 +143,8 @@
   },
   "training_years": {
     "train_year_min": 2018,
-    "train_year_max": 2023,
-    "val_year": 2024
+    "train_year_max": 2024,
+    "val_year": 2025
   },
   "hyperparameters": {
     "winner": {
@@ -150,7 +153,7 @@
       "learning_rate": 0.05,
       "subsample": 0.8,
       "colsample_bytree": 0.8,
-      "scale_pos_weight": 18.976,
+      "scale_pos_weight": 18.973154362416107,
       "use_label_encoder": false,
       "eval_metric": "logloss",
       "random_state": 42,
@@ -162,19 +165,19 @@
       "learning_rate": 0.05,
       "subsample": 0.8,
       "colsample_bytree": 0.8,
-      "scale_pos_weight": 5.658666666666667,
+      "scale_pos_weight": 5.657718120805369,
       "use_label_encoder": false,
       "eval_metric": "logloss",
       "random_state": 42,
       "verbosity": 0
     }
   },
-  "trained_at": "2026-05-26T16:35:08.561009+00:00",
+  "trained_at": "2026-05-30T12:43:40.765355+00:00",
   "metrics": {
-    "winner_exact_accuracy": 0.4583,
-    "winner_top3_accuracy": 0.8333,
-    "podium_accuracy": 0.8643,
-    "training_rows": 2497,
+    "winner_exact_accuracy": 0.6667,
+    "winner_top3_accuracy": 1.0,
+    "podium_accuracy": 0.8954,
+    "training_rows": 2976,
     "validation_races": 24
   }
 }
