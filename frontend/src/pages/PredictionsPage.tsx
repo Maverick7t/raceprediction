@@ -89,14 +89,21 @@ export function PredictionsPage() {
                 {/* Hero Race Card */}
                 {raceData && selectedRace && raceData.predictions && raceData.predictions.length > 0 && (
                     <div className="mb-12 animate-fade-in-up">
+                        {(() => {
+                            const topPrediction = raceData.predictions[0];
+                            const teamTheme = getTeamTheme(topPrediction.team_id || '');
+
+                            return (
                         <HeroRaceCard
                             raceName={selectedRace.race_name}
                             round={selectedRace.round}
-                            raceDate={selectedRace.race_date}
-                            winner={raceData.predictions[0].driver_number?.toString() || 'TBD'}
-                            team={raceData.predictions[0].team || 'TBD'}
-                            probability={Math.round(raceData.predictions[0].predicted_winner_prob || 0)}
+                            raceDate={raceData.generated_at}
+                            winner={topPrediction.driver_name || topPrediction.driver_code}
+                            team={teamTheme.name}
+                            probability={Math.round((topPrediction.predicted_winner_prob || 0) * 100)}
                         />
+                            );
+                        })()}
                     </div>
                 )}
 
