@@ -26,7 +26,7 @@ export default function PredictionGrid({
               position={index + 1}
               driver={driver.driver_name || driver.driver_code}
               team={teamTheme.name}
-              probability={Math.round(driver.predicted_winner_prob || 0)}
+              probability={Math.round((driver.predicted_winner_prob || 0) * 100)}
               teamColor={teamTheme.primary}
             />
           );
