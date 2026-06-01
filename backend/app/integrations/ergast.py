@@ -77,6 +77,7 @@ class ErgastClient:
                 "race_key": race_key,
                 "race_name": race["raceName"],
                 "circuit_id": race["Circuit"]["circuitId"],
+                "race_date": race["date"],
                 "source": "ergast",
             })
  
@@ -117,6 +118,7 @@ class ErgastClient:
                 "round": round_number,
                 "race_key": race_key,
                 "race_name": race["raceName"],
+                "race_date": race["date"],
                 "circuit_id": race["Circuit"]["circuitId"],
                 "source": "ergast",
             })
