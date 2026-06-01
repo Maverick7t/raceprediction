@@ -16,7 +16,7 @@ def list_races():
     """All race keys present in qualifying_raw, newest first."""
     with get_session() as session:
         result = session.execute(text("""
-            SELECT DISTINCT race_key, year, round, race_name, circuit_id
+            SELECT DISTINCT race_key, year, round, race_name, circuit_id, race_date
             FROM qualifying_raw
             ORDER BY year DESC, round DESC
         """))
