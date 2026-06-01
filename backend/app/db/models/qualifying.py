@@ -100,6 +100,11 @@ class QualifyingRaw(Base):
         server_default=func.now(),
     )
 
+    race_date: Mapped[datetime | None] = mapped_column(
+        Date,
+        nullable=True,
+    )
+
     __table_args__ = (
         UniqueConstraint(
             "race_key",
