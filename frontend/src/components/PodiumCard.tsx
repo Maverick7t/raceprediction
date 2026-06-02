@@ -25,9 +25,9 @@ export function PodiumCard({
     image,
 }: PodiumCardProps) {
     const heights = {
-        1: "h-[420px]",
-        2: "h-[360px]",
-        3: "h-[320px]",
+        1: "h-[400px]",
+        2: "h-[350px]",
+        3: "h-[300px]",
     };
 
     return (
@@ -36,19 +36,20 @@ export function PodiumCard({
                 relative
                 overflow-hidden
                 rounded-2xl
+                w-full
                 ${heights[position]}
             `}
             style={{
                 backgroundColor: teamColor,
             }}
         >
-            {/* Dot pattern */}
+            {/* F1 Arrow Halftone Pattern */}
             <div
-                className="absolute inset-0 opacity-25"
+                className="absolute inset-y-0 left-0 w-[75%]"
                 style={{
-                    backgroundImage:
-                        "radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px)",
-                    backgroundSize: "6px 6px",
+                    background: "rgba(255,255,255,.30)",
+                    clipPath:
+                        "polygon(0 0, 78% 0, 100% 50%, 78% 100%, 0 100%)",
                 }}
             />
 
@@ -63,7 +64,7 @@ export function PodiumCard({
 
             {/* Team glow */}
             <div
-                className="absolute -right-20 top-0 h-full w-64 blur-3xl opacity-40"
+                className="absolute -right-16 top-0 h-full w-80 blur-[120px] opacity-60"
                 style={{
                     background: teamColor,
                 }}
@@ -76,9 +77,10 @@ export function PodiumCard({
                 style={{ zIndex: 1 }}
                 className="
                     absolute
-                    bottom-[-140px]
+                    bottom-[-120px]
                     right-[-10px]
-                    h-[120%]
+                    h-[115%] 
+                    xl:h-[130%]
                     max-w-none
                     object-contain
                     pointer-events-none
@@ -92,7 +94,8 @@ export function PodiumCard({
                     <div className="flex items-start gap-2 text-white">
                         <span
                             style={{
-                                fontFamily: "KH Interference F1",
+                                fontFamily: "KHInterferenceF1",
+                                fontSize: "28px",
                                 fontWeight: 700,
                             }}
                         >
@@ -101,8 +104,8 @@ export function PodiumCard({
 
                         <span
                             style={{
-                                fontFamily: "KH Interference F1",
-                                fontSize: "18px",
+                                fontFamily: "KHInterferenceF1",
+                                fontSize: "12px",
                                 fontWeight: 700,
                                 marginTop: "2px",
                             }}
@@ -153,7 +156,7 @@ export function PodiumCard({
                 <div className="mt-auto">
                     <div
                         style={{
-                            fontFamily: "KH Interference F1",
+                            fontFamily: "KHInterferenceF1",
                             fontWeight: 700,
                         }}
                     >
