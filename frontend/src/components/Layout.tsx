@@ -60,22 +60,18 @@ export function Layout() {
             <header
                 className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-6"
                 style={{
-                    height: '52px',
+                    height: '60px',
                     background: 'var(--bg-surface)',
                     borderBottom: '1px solid var(--border-default)',
                 }}
             >
                 {/* Logo */}
-                <div className="flex items-center gap-2">
-                    <div
-                        className="w-6 h-6 rounded-sm flex items-center justify-center"
-                        style={{ background: 'var(--accent-red)' }}
-                    >
-                        <span className="font-display font-black text-white text-xs leading-none">F1</span>
-                    </div>
-                    <span className="font-display font-bold text-sm tracking-widest text-[var(--text-primary)] uppercase">
-                        PitWall
-                    </span>
+                <div className="flex items-center">
+                    <img
+                        src="/f1l.png"
+                        alt="Formula 1"
+                        className="h-7 w-auto object-contain"
+                    />
                 </div>
 
                 {/* Desktop nav */}
@@ -105,7 +101,7 @@ export function Layout() {
             {/* ── Page content ───────────────────────────── */}
             <main
                 className="flex-1 pb-20 sm:pb-0"
-                style={{ marginTop: '52px' }}
+                style={{ marginTop: '60px' }}
             >
                 <Outlet />
             </main>
