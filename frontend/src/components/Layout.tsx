@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
+import { HeaderBanner } from './HeaderBanner';
 
 // Icons (inline SVG to avoid icon library dep)
 const IconPredictions = () => (
@@ -56,6 +57,8 @@ export function Layout() {
     return (
         <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-base)' }}>
 
+            <HeaderBanner />
+
             {/* ── Top header ─────────────────────────────── */}
             <header
                 className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-6"
@@ -101,7 +104,7 @@ export function Layout() {
             {/* ── Page content ───────────────────────────── */}
             <main
                 className="flex-1 pb-20 sm:pb-0"
-                style={{ marginTop: '60px' }}
+                style={{ marginTop: 0 }}
             >
                 <Outlet />
             </main>
