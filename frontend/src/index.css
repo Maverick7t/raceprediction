@@ -1,3 +1,6 @@
+
+
+
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
 @import "tailwindcss";
@@ -41,6 +44,36 @@ body {
 /* ── Typography helpers ─────────────────────────── */
 .font-display { font-family: 'Barlow Condensed', sans-serif; }
 .font-data    { font-family: 'DM Mono', monospace; }
+
+@font-face {
+  font-family: "Formula1R";
+  src: url("/fonts/formula1/Formula1-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Formula1B";
+  src: url("/fonts/formula1/Formula1-Bold.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Formula1BL";
+  src: url("/fonts/formula1/Formula1-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "KHInterferenceF1";
+  src: url("/fonts/kh-interference-f1/KHInterferenceF1-Regular.woff2")
+       format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+
 
 /* ── Scrollbar ──────────────────────────────────── */
 ::-webkit-scrollbar          { width: 4px; height: 4px; }

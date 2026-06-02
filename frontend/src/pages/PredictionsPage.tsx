@@ -65,6 +65,12 @@ export function PredictionsPage() {
         return list;
     }, [raceData, sortBy]);
 
+    const podium = useMemo(() => {
+        return sorted
+            .slice().sort((a, b) => a.predicted_rank - b.predicted_rank)
+            .slice(0, 3);
+    }, [sorted]);
+
     // ── Render ─────────────────────────────────────
     return (
         <div className="flex flex-col h-full">
@@ -87,26 +93,6 @@ export function PredictionsPage() {
             {/* ── Main content ─────────────────────────── */}
             <div className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
 
-                {/* Hero Race Card
-                {raceData && selectedRace && raceData.predictions && raceData.predictions.length > 0 && (
-                    <div className="mb-12 animate-fade-in-up">
-                        {(() => {
-                            const topPrediction = raceData.predictions[0];
-                            const teamTheme = getTeamTheme(topPrediction.team_id || '');
-
-                            return (
-                                <HeroRaceCard
-                                    raceName={selectedRace.race_name}
-                                    round={selectedRace.round}
-                                    raceDate={selectedRace.race_date ?? ''}
-                                    winner={topPrediction.driver_name || topPrediction.driver_code}
-                                    team={teamTheme.name}
-                                    probability={Math.round((topPrediction.predicted_winner_prob || 0) * 100)}
-                                />
-                            );
-                        })()}
-                    </div>
-                )} */}
 
                 {/* Race header */}
                 {raceData && selectedRace && (
@@ -160,36 +146,49 @@ export function PredictionsPage() {
                     </div>
                 )}
 
-                <div className="grid md:grid-cols-3 gap-4 items-end">
 
-                    <PodiumCard
-                        position={2}
-                        driverName="Lando Norris"
-                        teamName="McLaren"
-                        value="72%"
-                        teamColor="#FF8000"
-                        image="/drivers/NOR.png"
-                    />
 
-                    <PodiumCard
-                        position={1}
-                        driverName="Max Verstappen"
-                        teamName="Red Bull"
-                        value="84%"
-                        teamColor="#3671C6"
-                        image="/drivers/VER.png"
-                    />
+                {podium.length === 3 && (
+                    <div className="grid md:grid-cols-3 gap-4 items-end mb-10">
 
-                    <PodiumCard
-                        position={3}
-                        driverName="Charles Leclerc"
-                        teamName="Ferrari"
-                        value="61%"
-                        teamColor="#E8002D"
-                        image="/drivers/LEC.png"
-                    />
+                        <PodiumCard
+                            position={2}
+                            firstName={podium[1].driver_name.split(" ")[0]}
+                            lastName={podium[1].driver_name.split(" ").slice(1).join(" ")}
+                            teamName={getTeamTheme(podium[1].team_id).name}
+                            value={`${Math.round(
+                                podium[1].predicted_winner_prob * 100
+                            )}%`}
+                            teamColor={getTeamTheme(podium[1].team_id).primary}
+                            image={`/drivers/${podium[1].driver_code.toUpperCase()}.png`}
+                        />
 
-                </div>
+                        <PodiumCard
+                            position={1}
+                            firstName={podium[0].driver_name.split(" ")[0]}
+                            lastName={podium[0].driver_name.split(" ").slice(1).join(" ")}
+                            teamName={getTeamTheme(podium[0].team_id).name}
+                            value={`${Math.round(
+                                podium[0].predicted_winner_prob * 100
+                            )}%`}
+                            teamColor={getTeamTheme(podium[0].team_id).primary}
+                            image={`/drivers/${podium[0].driver_code.toUpperCase()}.png`}
+                        />
+
+                        <PodiumCard
+                            position={3}
+                            firstName={podium[2].driver_name.split(" ")[0]}
+                            lastName={podium[2].driver_name.split(" ").slice(1).join(" ")}
+                            teamName={getTeamTheme(podium[2].team_id).name}
+                            value={`${Math.round(
+                                podium[2].predicted_winner_prob * 100
+                            )}%`}
+                            teamColor={getTeamTheme(podium[2].team_id).primary}
+                            image={`/drivers/${podium[2].driver_code.toUpperCase()}.png`}
+                        />
+
+                    </div>
+                )}
 
                 {/* Prediction Grid */}
                 {predLoading ? (
@@ -200,7 +199,7 @@ export function PredictionsPage() {
                     <EmptyState label="No predictions for this race" />
                 ) : (
                     <div className="space-y-12">
-                        <PredictionGrid predictions={sorted} />
+                        {/* <PredictionGrid predictions={sorted} /> */}
 
                         <ProbabilitySection predictions={sorted} />
                     </div>
