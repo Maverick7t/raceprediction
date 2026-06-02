@@ -170,7 +170,7 @@ export function HistoryPage() {
         .sort((a, b) => b.round - a.round);
 
     return (
-        <div className="max-w-3xl mx-auto w-full px-4 py-6">
+        <div className="max-w-[1600px] mx-auto w-full px-4 md:px-6 xl:px-10 py-6">
 
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
