@@ -130,7 +130,7 @@ export function PredictionsPage() {
                                 {selectedRace.race_name}
                             </h1>
                             <p className="font-mono text-xs text-[var(--text-muted)] mt-0.5">
-                                {selectedRace.circuit_id} · Generated {raceData.generated_at}
+                                {selectedRace.circuit_id} · Generated {selectedRace.race_date}
                             </p>
                         </div>
 
