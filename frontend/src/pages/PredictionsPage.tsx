@@ -91,7 +91,7 @@ export function PredictionsPage() {
             </div>
 
             {/* ── Main content ─────────────────────────── */}
-            <div className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
+            <div className="flex-1 max-w-[1700px] mx-auto w-full px-4 md:px-6 xl:px-10 py-6">
 
 
                 {/* Race header */}
@@ -149,7 +149,16 @@ export function PredictionsPage() {
 
 
                 {podium.length === 3 && (
-                    <div className="grid md:grid-cols-3 gap-4 items-end mb-10">
+                    <div
+                        className="
+                        grid
+                        gap-6
+                        items-end
+                        mb-10
+                        grid-cols-1
+                        xl:grid-cols-[1fr_1.35fr_1fr]
+                    "
+                    >
 
                         <PodiumCard
                             position={2}
