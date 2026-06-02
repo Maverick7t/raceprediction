@@ -37,7 +37,7 @@ export function RaceSelector({ races, selectedKey, onSelect }: RaceSelectorProps
                         onClick={() => onSelect(race.race_key)}
                         disabled={!race.has_predictions}
                         className={`
-              shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-sm
+              shrink-0 w-[180px] xl:w-[210px] flex flex-col items-center gap-1 px-3 py-3 round sm
               border transition-all duration-200 text-left
               ${isSelected
                                 ? 'border-[var(--accent-red)] bg-[var(--accent-red)]/10'
