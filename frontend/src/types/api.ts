@@ -4,6 +4,7 @@ export interface RaceListItem {
     round: number;
     race_name: string;
     circuit_id: string;
+    race_date: string;
     has_predictions?: boolean;
 }
 
