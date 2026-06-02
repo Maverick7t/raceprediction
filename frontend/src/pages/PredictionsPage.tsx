@@ -8,9 +8,10 @@ import { TeamBadge, TeamAccent } from '../components/TeamBadge';
 import { LoadingState, ErrorState, EmptyState } from '../components/LoadingError';
 import { getTeamTheme } from '../utils/teamColors';
 import { ordinal } from '../utils/format';
-import HeroRaceCard from '../components/HeroRaceCard';
+// import HeroRaceCard from '../components/HeroRaceCard';
 import PredictionGrid from '../components/PredictionGrid';
 import ProbabilitySection from '../components/ProbabilitySection';
+import { PodiumCard } from "../components/PodiumCard";
 
 // Medal color for top 3 finishers
 function positionColor(pos: number) {
@@ -86,7 +87,7 @@ export function PredictionsPage() {
             {/* ── Main content ─────────────────────────── */}
             <div className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
 
-                {/* Hero Race Card */}
+                {/* Hero Race Card
                 {raceData && selectedRace && raceData.predictions && raceData.predictions.length > 0 && (
                     <div className="mb-12 animate-fade-in-up">
                         {(() => {
@@ -105,7 +106,7 @@ export function PredictionsPage() {
                             );
                         })()}
                     </div>
-                )}
+                )} */}
 
                 {/* Race header */}
                 {raceData && selectedRace && (
@@ -158,6 +159,37 @@ export function PredictionsPage() {
                         </div>
                     </div>
                 )}
+
+                <div className="grid md:grid-cols-3 gap-4 items-end">
+
+                    <PodiumCard
+                        position={2}
+                        driverName="Lando Norris"
+                        teamName="McLaren"
+                        value="72%"
+                        teamColor="#FF8000"
+                        image="/drivers/NOR.png"
+                    />
+
+                    <PodiumCard
+                        position={1}
+                        driverName="Max Verstappen"
+                        teamName="Red Bull"
+                        value="84%"
+                        teamColor="#3671C6"
+                        image="/drivers/VER.png"
+                    />
+
+                    <PodiumCard
+                        position={3}
+                        driverName="Charles Leclerc"
+                        teamName="Ferrari"
+                        value="61%"
+                        teamColor="#E8002D"
+                        image="/drivers/LEC.png"
+                    />
+
+                </div>
 
                 {/* Prediction Grid */}
                 {predLoading ? (
