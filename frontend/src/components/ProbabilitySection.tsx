@@ -43,7 +43,7 @@ export default function ProbabilitySection({
                                 </div>
                             </div>
 
-                            <div className="w-48 flex-shrink-0">
+                            <div className="w-[35%] min-w-[180px] max-w-[500px]">
                                 <div
                                     className="h-2 rounded-full bg-slate-700/50 overflow-hidden"
                                     style={{ "--bar-width": `${probability}%` } as React.CSSProperties}
