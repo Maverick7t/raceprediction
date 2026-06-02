@@ -77,7 +77,7 @@ export function StandingsPage() {
     const maxConstructorPts = Math.max(...constructors.map((c) => c.points), 1);
 
     return (
-        <div className="max-w-3xl mx-auto w-full px-4 py-6">
+        <div className="max-w-[1600px] mx-auto w-full px-4 md:px-10 py-6">
 
             {/* Page header */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
