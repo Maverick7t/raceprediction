@@ -1,4 +1,3 @@
-// src/components/layout/Header.tsx
 import { Link, useLocation } from 'react-router-dom';
 
 const NAV = [
@@ -11,36 +10,89 @@ export function Header() {
     const { pathname } = useLocation();
 
     return (
-        <header className="sticky top-0 z-50 border-b border-border-subtle bg-bg-primary/80 backdrop-blur-md">
-            <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <header
+            className="
+                sticky
+                top-0
+                z-50
+                border-b
+                border-[var(--border-default)]
+                bg-[var(--bg-surface)]/80
+                backdrop-blur-md
+            "
+        >
+            <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+
                 {/* Logo */}
-                <Link to="/" className="flex items-center gap-3 group text-text-primary">
-                    <div className="h-7 w-1 rounded-full bg-f1-red transition-all group-hover:h-9" />
-                    <span className="font-heading text-xl font-700 tracking-widest text-text-primary uppercase">
-                        F1<span className="text-f1-red">.</span>PREDICT
+                <Link
+                    to="/"
+                    className="group flex items-center gap-4"
+                >
+                    <div
+                        className="
+                            h-6
+                            w-[2px]
+                            bg-white/40
+                            transition-all
+                            duration-200
+                            group-hover:h-8
+                        "
+                    />
+
+                    <span
+                        className="
+                            font-f1-bold
+                            text-lg
+                            uppercase
+                            tracking-[0.25em]
+                            text-white
+                        "
+                    >
+                        F1.PREDICT
                     </span>
                 </Link>
 
-                {/* Nav */}
-                <nav className="flex items-center gap-1">
+                {/* Navigation */}
+                <nav className="flex items-center gap-8">
                     {NAV.map(({ label, to }) => {
                         const active = pathname === to;
+
                         return (
                             <Link
                                 key={to}
                                 to={to}
-                                className={[
-                                    'rounded px-4 py-1.5 font-body text-sm font-500 tracking-wide transition-all',
-                                    active
-                                        ? 'bg-f1-red-dim text-f1-red'
-                                        : 'text-text-secondary hover:text-text-primary hover:bg-white/5',
-                                ].join(' ')}
+                                className={`
+                                    relative
+                                    uppercase
+                                    text-sm
+                                    tracking-[0.18em]
+                                    transition-all
+                                    duration-200
+                                    ${active
+                                        ? 'font-f1-bold text-white'
+                                        : 'font-f1 text-[var(--text-secondary)] hover:text-white'
+                                    }
+                                `}
                             >
                                 {label}
+
+                                {active && (
+                                    <span
+                                        className="
+                                            absolute
+                                            -bottom-2
+                                            left-0
+                                            w-full
+                                            h-[2px]
+                                            bg-white
+                                        "
+                                    />
+                                )}
                             </Link>
                         );
                     })}
                 </nav>
+
             </div>
         </header>
     );
