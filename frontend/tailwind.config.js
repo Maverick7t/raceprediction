@@ -33,11 +33,9 @@ export default {
             bronze: '#CD7F32',
         },
         fontFamily: {
-            display: ['Barlow Condensed', 'sans-serif'],
-            barlow: ['Barlow Condensed', 'sans-serif'],
-            body: ['Barlow', 'sans-serif'],
-            mono: ['DM Mono', 'monospace'],
-            heading: ['Rajdhani', 'sans-serif'],
+            formula1: ["Formula1", "sans-serif"],
+            f1display: ["F1Display", "sans-serif"],
+            sans: ["Inter", "system-ui", "sans-serif"],
         },
         extend: {
             animation: {
