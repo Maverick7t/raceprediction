@@ -33,7 +33,7 @@ from workers.tasks.fetch_tasks import (
 )
 from workers.tasks.store_tasks import store_results_raw, store_telemetry_raw
 from workers.tasks.validate_tasks import validate_results, validate_telemetry
-from workers.tasks.store_tasks import store_results_raw, store_telemetry_raw, store_driver_standings, store_constructor_standings
+from workers.tasks.store_tasks import store_driver_standings, store_constructor_standings
  
  
 @flow(
