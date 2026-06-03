@@ -1,9 +1,9 @@
 from datetime import datetime
+from sqlalchemy import Date
 
 from sqlalchemy import (
     BigInteger,
     CheckConstraint,
-    Float,
     Index,
     SmallInteger,
     Text,
