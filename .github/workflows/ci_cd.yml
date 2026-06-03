@@ -95,9 +95,12 @@ jobs:
             "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys")
 
           echo "HTTP $HTTP_CODE"
-          cat response.txt
 
-          test "$HTTP_CODE" = "200" -o "$HTTP_CODE" = "201"
+          if [ -f response.txt ]; then
+            cat response.txt
+          fi
+
+          test "$HTTP_CODE" = "201"
 
       - name: Wait for deploy health
         run: |
