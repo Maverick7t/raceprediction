@@ -4,7 +4,7 @@ GET /api/v1/health/db     → Supabase reachable + prediction staleness
 GET /api/v1/health/model  → model artifacts loaded
 """
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
