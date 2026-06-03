@@ -11,7 +11,6 @@ DataFrames and return values. Database loading is mocked.
 """
  
 import pandas as pd
-import numpy as np
 import pytest
  
 from app.features.compute import (
@@ -24,7 +23,6 @@ from app.features.compute import (
     _constructor_form,
     _reliability_score,
     DNF_STATUSES,
-    WINDOW,
 )
  
  
