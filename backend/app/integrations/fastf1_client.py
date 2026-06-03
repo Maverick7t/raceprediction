@@ -59,7 +59,7 @@ def load_qualifying_session(year: int, round_number: int) -> pd.DataFrame:
         )
  
     # Keep only accurate laps (no pit lane exits, VSC outlaps etc.)
-    valid_laps = laps[laps["IsAccurate"] == True].copy()
+    valid_laps = laps[laps["IsAccurate"]].copy()
     if valid_laps.empty:
         # Fall back to all laps if IsAccurate filters everything out
         valid_laps = laps.copy()
