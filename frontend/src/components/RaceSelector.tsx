@@ -53,13 +53,20 @@ export function RaceSelector({ races, selectedKey, onSelect }: RaceSelectorProps
 
                         {/* Race label */}
                         <span
-                            className={`font-display font-semibold text-xs whitespace-nowrap ${isSelected ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
+                            className={`font-f1 text-xs whitespace-nowrap ${isSelected
+                                ? 'text-[var(--text-primary)]'
+                                : 'text-[var(--text-secondary)]'
                                 }`}
                         >
                             {race.race_name}
                         </span>
 
-                        <span className="font-mono text-[9px] text-[var(--text-muted)]">
+                        <span
+                            className={`font-f1 text-[9px] ${isSelected
+                                ? 'text-[var(--text-secondary)]'
+                                : 'text-[var(--text-muted)]'
+                                }`}
+                        >
                             {race.circuit_id}
                         </span>
                     </button>
