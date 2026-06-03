@@ -158,23 +158,5 @@ def get_season_schedule(year: int) -> pd.DataFrame:
         raise IngestionError("fastf1", f"Schedule load failed for year={year}: {e}") from e
  
 
- # ---------------------------------------------------------------------------
-# Internal helpers
-# ---------------------------------------------------------------------------
  
-def _build_race_key(event_name: str, year: int) -> str:
-    """
-    Produce a stable, lowercase snake_case race identifier.
-    Example: "Bahrain Grand Prix" + 2024 → "bahrain_grand_prix_2024"
-    This key is the join key across all raw tables.
-    """
-    slug = (
-        event_name.lower()
-        .strip()
-        .replace(" ", "_")
-        .replace("-", "_")
-        .replace("'", "")
-        .replace(".", "")
-    )
-    return f"{slug}_{year}"
  
