@@ -1,5 +1,4 @@
 # tests/conftest.py — remove the sqlite override completely
-import os
 import pandas as pd
 import pytest
 from sqlalchemy import create_engine
