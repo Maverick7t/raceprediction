@@ -11,18 +11,14 @@ No database calls. No MLflow calls.
 All external dependencies are mocked.
 """
  
-import json
 import pytest
 import pandas as pd
 import numpy as np
-from pathlib import Path
 from unittest.mock import patch, MagicMock
  
-from app.ml.training.evaluator import should_promote, PROMOTION_RULES, MINIMUM_THRESHOLDS
+from app.ml.training.evaluator import should_promote
 from app.ml.training.trainer import (
     _encode_and_clean,
-    _evaluate,
-    FEATURE_COLUMNS,
     CATEGORICAL_COLUMNS,
 )
 
