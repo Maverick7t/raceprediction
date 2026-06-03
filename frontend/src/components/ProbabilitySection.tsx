@@ -13,11 +13,11 @@ export default function ProbabilitySection({
         <div className="space-y-6">
             <div>
                 <h2 className="text-2xl font-bold text-white font-barlow">
-                    Win Probability Distribution
+                    Winning Probability
                 </h2>
 
                 <p className="text-slate-400 text-sm font-mono mt-1">
-                    Model confidence across leading drivers
+                    Based on Qualifying
                 </p>
             </div>
 
