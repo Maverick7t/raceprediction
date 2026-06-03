@@ -83,19 +83,22 @@ jobs:
         run: python -m pytest tests/unit -v --tb=short
 
   # --------------------------------------------------------------------------
-  - name: Trigger Render deploy
-  run: |
-    HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" \
-      -X POST \
-      -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-      -H "Content-Type: application/json" \
-      "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
-      -d '{"clearCache": false}')
+  deploy:
+    - name: Trigger Render deploy
+    run: |
+      HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" \
+        -X POST \
+        -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+        -H "Content-Type: application/json" \
+        "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+        -d '{"clearCache": false}')
 
-    echo "HTTP $HTTP_CODE"
+      echo "HTTP $HTTP_CODE"
 
-    if [ -f response.txt ]; then
-      cat response.txt
-    fi
+      if [ -f response.txt ]; then
+        cat response.txt
+      fi
 
-    test "$HTTP_CODE" = "200" -o "$HTTP_CODE" = "201"
+      if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "201" ]; then
+        exit 1
+      fi
