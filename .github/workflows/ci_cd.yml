@@ -83,43 +83,19 @@ jobs:
         run: python -m pytest tests/unit -v --tb=short
 
   # --------------------------------------------------------------------------
-  deploy:
-    name: Deploy to Render
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  - name: Trigger Render deploy
+  run: |
+    HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" \
+      -X POST \
+      -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+      -H "Content-Type: application/json" \
+      "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+      -d '{"clearCache": false}')
 
-    steps:
-      - name: Trigger Render deploy
-        run: |
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-            --fail \
-            -X POST \
-            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
-            -d '{"clearCache": false}')
-          echo "HTTP $HTTP_CODE"
-          cat response.txt
+    echo "HTTP $HTTP_CODE"
 
-          test "$HTTP_CODE" = "200" -o "$HTTP_CODE" = "201"
+    if [ -f response.txt ]; then
+      cat response.txt
+    fi
 
-      - name: Wait for deploy health
-        run: |
-          echo "Waiting for deploy to become healthy..."
-
-          for i in $(seq 1 20); do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-              "https://f1-prediction-api.onrender.com/api/v1/health" || true)
-
-            if [ "$STATUS" = "200" ]; then
-              echo "Deploy healthy after ${i} attempts"
-              exit 0
-            fi
-
-            echo "Attempt $i/20 — got HTTP $STATUS"
-            sleep 15
-          done
-
-          echo "Deploy health check timed out"
-          exit 1
+    test "$HTTP_CODE" = "200" -o "$HTTP_CODE" = "201"
