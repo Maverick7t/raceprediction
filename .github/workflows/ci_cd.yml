@@ -1,17 +1,3 @@
-# .github/workflows/ci_cd.yml
-#
-# Runs on every push to main.
-# Pipeline: lint → unit tests → build Docker image → deploy to Render
-#
-# Required GitHub Secrets:
-#   RENDER_API_KEY        — Render API key (from Render dashboard → Account → API Keys)
-#   RENDER_SERVICE_ID     — Render service ID (srv-XXXXX, from service URL)
-#   DATABASE_URL          — Supabase connection string (prod project)
-#   SENTRY_DSN            — Sentry project DSN
-#   BETTERSTACK_TOKEN     — Logtail source token
-#   API_SECRET_KEY        — Bearer token for write endpoints
-#   FRONTEND_URL          — https://your-app.vercel.app
-
 name: CI / CD
 
 on:
@@ -22,7 +8,6 @@ on:
 
 env:
   PYTHON_VERSION: "3.10"
-  # Tests run against a real Postgres — set DATABASE_URL in repo secrets
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
 jobs:
@@ -30,35 +15,41 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: backend
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install linting deps
-        run: pip install ruff==0.8.0
+      - name: Install Ruff
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff==0.8.0
 
       - name: Ruff lint
-        run: ruff check app/ workers/ scripts/ tests/
+        run: ruff check app workers scripts tests
 
   # --------------------------------------------------------------------------
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
     needs: lint
+
     defaults:
       run:
         working-directory: backend
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -67,17 +58,31 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          elif [ -f requirement.txt ]; then
+            pip install -r requirement.txt
+          else
+            echo "No requirements file found"
+            exit 1
+          fi
+
+          pip install pytest
+
+      - name: Verify pytest
+        run: python -m pytest --version
 
       - name: Run unit tests
-        run: pytest tests/unit/ -v --tb=short
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           ENVIRONMENT: dev
-          LOG_LEVEL: WARNING   # reduce noise in CI logs
+          LOG_LEVEL: WARNING
+        run: python -m pytest tests/unit -v --tb=short
 
   # --------------------------------------------------------------------------
-  # Only runs on pushes to main (not PRs) — deployment gate
   deploy:
     name: Deploy to Render
     runs-on: ubuntu-latest
@@ -86,9 +91,6 @@ jobs:
 
     steps:
       - name: Trigger Render deploy
-        # Render's deploy hook: POST to their API with the service ID
-        # This uses the "manual deploy" endpoint — Render pulls from GitHub
-        # and builds the Docker image using the Dockerfile in the repo root.
         run: |
           curl -s -o /dev/null -w "%{http_code}" \
             --fail \
@@ -99,19 +101,21 @@ jobs:
             -d '{"clearCache": false}'
 
       - name: Wait for deploy health
-        # Poll /api/v1/health every 15s for up to 5 minutes
-        # Fails the job if the deploy never becomes healthy
         run: |
           echo "Waiting for deploy to become healthy..."
+
           for i in $(seq 1 20); do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
               "https://${{ secrets.RENDER_SERVICE_ID }}.onrender.com/api/v1/health" || true)
+
             if [ "$STATUS" = "200" ]; then
               echo "Deploy healthy after ${i} attempts"
               exit 0
             fi
-            echo "Attempt $i/20 — got HTTP $STATUS, waiting 15s..."
+
+            echo "Attempt $i/20 — got HTTP $STATUS"
             sleep 15
           done
+
           echo "Deploy health check timed out"
           exit 1
