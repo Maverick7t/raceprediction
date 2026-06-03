@@ -96,8 +96,11 @@ class RawDataRepository:
         return self._execute_batch(
             df,
             stmt,
-            "qualifying_raw",
-            defaults={"best_lap_seconds": None},
+            "results_raw",
+            defaults={
+                "race_date": None,
+                "best_lap_seconds": None,
+            },
         )
     def upsert_results(self, df: pd.DataFrame) -> int:
         """
@@ -132,7 +135,14 @@ class RawDataRepository:
                 ingested_at     = EXCLUDED.ingested_at
         """)
  
-        return self._execute_batch(df, stmt, "results_raw")
+        return self._execute_batch(
+            df,
+            stmt,
+            "results_raw",
+            defaults={
+                "race_date": None,
+            },
+        )
     
     def upsert_telemetry(self, df: pd.DataFrame) -> int:
         """
