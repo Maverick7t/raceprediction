@@ -10,11 +10,7 @@ No credentials needed. No network. Pure SQLite.
 """
  
 import numpy as np
-import pandas as pd
-import pytest
-from sqlalchemy import text
  
-from app.db.repositories.raw_data_repo import RawDataRepository
 from app.db.repositories.raw_data_repo import _to_python_type
  
  
