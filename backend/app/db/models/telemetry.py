@@ -4,7 +4,6 @@ from sqlalchemy import (
     BigInteger,
     Boolean,
     CheckConstraint,
-    Float,
     Index,
     SmallInteger,
     Text,
