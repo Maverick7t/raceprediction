@@ -44,6 +44,22 @@ body {
 /* ── Typography helpers ─────────────────────────── */
 .font-display { font-family: 'Barlow Condensed', sans-serif; }
 .font-data    { font-family: 'DM Mono', monospace; }
+/* Formula 1 fonts */
+.font-f1 {
+  font-family: "Formula1R", sans-serif;
+}
+
+.font-f1-bold {
+  font-family: "Formula1B", sans-serif;
+}
+
+.font-f1-black {
+  font-family: "Formula1BL", sans-serif;
+}
+
+.font-f1-tech {
+  font-family: "KHInterferenceF1", sans-serif;
+}
 
 @font-face {
   font-family: "Formula1R";
