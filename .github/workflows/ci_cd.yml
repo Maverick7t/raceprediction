@@ -106,7 +106,7 @@ jobs:
 
           for i in $(seq 1 20); do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-              "https://${{ secrets.RENDER_SERVICE_ID }}.onrender.com/api/v1/health" || true)
+              "https://f1-prediction-api.onrender.com/api/v1/health" || true)
 
             if [ "$STATUS" = "200" ]; then
               echo "Deploy healthy after ${i} attempts"
