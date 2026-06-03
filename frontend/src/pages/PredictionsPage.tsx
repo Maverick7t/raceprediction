@@ -8,7 +8,6 @@ import { TeamBadge, TeamAccent } from '../components/TeamBadge';
 import { LoadingState, ErrorState, EmptyState } from '../components/LoadingError';
 import { getTeamTheme } from '../utils/teamColors';
 import { ordinal } from '../utils/format';
-// import HeroRaceCard from '../components/HeroRaceCard';
 import PredictionGrid from '../components/PredictionGrid';
 import ProbabilitySection from '../components/ProbabilitySection';
 import { PodiumCard } from "../components/PodiumCard";
@@ -98,26 +97,28 @@ export function PredictionsPage() {
                 {raceData && selectedRace && (
                     <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6 animate-fade-in-up">
                         <div>
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-3 mb-2">
                                 <span
-                                    className="font-mono text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-sm"
+                                    className="font-f1 text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-sm"
                                     style={{
                                         background: 'var(--bg-elevated)',
                                         color: 'var(--text-muted)',
                                         border: '1px solid var(--border-default)',
                                     }}
                                 >
-                                    Prediction snapshot
+                                    Prediction
                                 </span>
-                                <span className="font-mono text-[10px] text-[var(--text-muted)]">
-                                    {selectedRace.year} · Round {selectedRace.round}
+                                <span className="font-mono text-[11px] text-[var(--text-secondary)] tracking-wide">
+                                    ROUND {selectedRace.round}
                                 </span>
                             </div>
-                            <h1 className="font-display font-bold text-2xl sm:text-3xl text-[var(--text-primary)] tracking-wide">
+                            <h1 className="font-f1-bold text-2xl sm:text-3xl tracking-wide uppercase">
                                 {selectedRace.race_name}
                             </h1>
-                            <p className="font-mono text-xs text-[var(--text-muted)] mt-0.5">
-                                {selectedRace.circuit_id} · Race Date {selectedRace.race_date}
+                            <p className="font-display text-sm sm:text-base uppercase tracking-widest text-[var(--text-secondary)] mt-2">
+                                {selectedRace.circuit_id}
+                                <span className="mx-2 text-[var(--text-muted)]">•</span>
+                                {selectedRace.race_date}
                             </p>
                         </div>
 
@@ -134,7 +135,7 @@ export function PredictionsPage() {
                                 <button
                                     key={key}
                                     onClick={() => setSortBy(key)}
-                                    className={`px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest rounded-sm border transition-colors ${sortBy === key
+                                    className={`px-3 py-1.5 text-[10px] font-f1 uppercase rounded-sm border transition-colors ${sortBy === key
                                         ? 'border-[var(--accent-red)] text-[var(--accent-red)] bg-[var(--accent-red)]/10'
                                         : 'border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
                                         }`}
