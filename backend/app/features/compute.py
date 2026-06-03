@@ -377,7 +377,7 @@ def _tire_management_score(driver_telemetry: pd.DataFrame) -> float | None:
         return None
  
     accurate = driver_telemetry[
-        (driver_telemetry["is_accurate"] == True) &
+        (driver_telemetry["is_accurate"]) &
         (driver_telemetry["lap_seconds"].notna())
     ]
     if accurate.empty:
