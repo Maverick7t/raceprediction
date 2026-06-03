@@ -5,7 +5,6 @@ All Pandera DataFrame schemas for Phase 1 raw tables.
 Imported by validate_tasks.py (Prefect) and test_validation.py (pytest).
 """
  
-import pandera as pa
 from pandera import Check, Column, DataFrameSchema
  
 _VALID_COMPOUNDS = {"SOFT", "MEDIUM", "HARD", "INTERMEDIATE", "WET"}
