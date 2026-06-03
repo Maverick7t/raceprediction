@@ -102,7 +102,7 @@ def download_model_artifacts(local_dir: Path) -> bool:
     try:
         client = _get_client()
     except Exception:
-        logger.exception(f"Cannot connect to Supabase Storage: {e}")
+        logger.exception("Cannot connect to Supabase Storage")
         return False
  
     local_dir.mkdir(parents=True, exist_ok=True)
