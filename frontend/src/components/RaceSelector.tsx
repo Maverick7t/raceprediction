@@ -99,9 +99,9 @@ export function RaceSelector({
                         {/* Active race indicator */}
                         {isSelected && (
                             <div
-                                className="absolute bottom-0 left-2 right-2 h-[3px] rounded-full"
+                                className="absolute bottom-0 left-3 right-3 h-[3px] rounded-full bg-[var(--f1-red-dark)]"
                                 style={{
-                                    background: '#8B0000',
+                                    background: '#A6051A',
                                 }}
                             />
                         )}
