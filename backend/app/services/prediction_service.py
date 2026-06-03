@@ -9,7 +9,7 @@ The Prefect flow calls run_inference_for_race().
 """
 
 from app.core.logging import get_logger
-from app.db.repositories.feature_repo import FeatureRepository, CURRENT_FEATURE_VERSION
+from app.db.repositories.feature_repo import FeatureRepository
 from app.db.repositories.prediction_repo import PredictionRepository
 from app.ml.inference.loader import get_engine
 
