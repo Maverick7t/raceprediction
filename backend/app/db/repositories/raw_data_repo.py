@@ -17,7 +17,6 @@ import pandas as pd
 import math
 import numpy as np
 from sqlalchemy import text
-from sqlalchemy.orm import Session
  
 from app.core.exceptions import StorageError
 from app.core.logging import get_logger
@@ -33,8 +32,6 @@ def _to_python_type(value):
 
     Tests import this function directly.
     """
-    import math
-    import numpy as np
 
     if value is None:
         return None
