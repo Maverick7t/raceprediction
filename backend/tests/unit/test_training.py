@@ -155,7 +155,7 @@ class TestShouldRetrain:
     def test_no_metadata_returns_true(self):
         with patch("app.ml.training.evaluator._get_last_trained_at", return_value=None):
             from app.ml.training.evaluator import should_retrain
-            with patch("app.ml.training.evaluator.get_session") as mock_session:
+            with patch("app.ml.training.evaluator.get_session") as _:
                 result = should_retrain()
         assert result is True
  
