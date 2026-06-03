@@ -15,7 +15,6 @@ This flow never crashes the API.
 If training fails, the existing production model continues serving.
 """
  
-import sys
 from prefect import flow, task, get_run_logger
 from app.core.sentry import init_sentry, set_sentry_context
  
