@@ -135,12 +135,34 @@ export function PredictionsPage() {
                                 <button
                                     key={key}
                                     onClick={() => setSortBy(key)}
-                                    className={`px-3 py-1.5 text-[10px] font-f1 uppercase rounded-sm border transition-colors ${sortBy === key
-                                        ? 'border-[var(--accent-red)] text-[var(--accent-red)] bg-[var(--accent-red)]/10'
-                                        : 'border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
-                                        }`}
+                                    className={`
+        relative
+        px-3
+        py-2
+        text-[10px]
+        uppercase
+        transition-all
+        duration-200
+        ${sortBy === key
+                                            ? 'font-f1-bold text-white'
+                                            : 'font-f1 text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                                        }
+    `}
                                 >
                                     {label}
+
+                                    {sortBy === key && (
+                                        <span
+                                            className="
+                absolute
+                left-0
+                bottom-0
+                h-[3px]
+                w-full
+                bg-[#e10600]
+            "
+                                        />
+                                    )}
                                 </button>
                             ))}
                         </div>
