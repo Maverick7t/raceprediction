@@ -132,7 +132,7 @@ class OpenF1Client:
                 resp = self._session.get(url, timeout=_TIMEOUT)
                 resp.raise_for_status()
                 return resp.json()
-            except Exception as e:
+            except Exception:
                 if attempt == _MAX_RETRIES:
                     raise
                 time.sleep(2 ** attempt)
