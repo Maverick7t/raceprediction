@@ -82,10 +82,10 @@ export function StandingsPage() {
             {/* Page header */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
                 <div>
-                    <h1 className="font-display font-bold text-2xl sm:text-3xl text-[var(--text-primary)] tracking-wide">
+                    <h1 className="font-apax-th-superbold text-2xl sm:text-3xl tracking-wide uppercase">
                         Championship
                     </h1>
-                    <p className="font-mono text-[10px] text-[var(--text-muted)] mt-0.5">
+                    <p className="font-f1 text-[10px] text-[var(--text-muted)] mt-0.5">
                         Season {resolvedYear}
                     </p>
                 </div>
@@ -153,8 +153,8 @@ export function StandingsPage() {
                                 <PositionBadge pos={d.position} />
 
                                 {/* Driver info */}
-                                <div className="w-32 shrink-0">
-                                    <div className="font-display font-bold text-sm text-[var(--text-primary)] leading-tight">
+                                <div className="w-58 shrink-0">
+                                    <div className="font-f1 text-white truncate tracking-[0.03em]">
                                         {d.driver_name}
                                     </div>
                                     <div className="font-mono text-[10px] text-[var(--text-muted)]">
@@ -197,11 +197,11 @@ export function StandingsPage() {
                                 />
                                 <PositionBadge pos={c.position} />
                                 <div className="flex-1 min-w-0">
-                                    <div className="font-display font-bold text-sm text-[var(--text-primary)] leading-tight">
+                                    <div className="font-f1 text-white truncate tracking-[0.03em]">
                                         {c.team}
                                     </div>
                                 </div>
-                                <TeamBadge teamId={c.team_id} size="sm" />
+
                                 <PointsBar points={c.points} max={maxConstructorPts} />
                                 <div className="text-right shrink-0 w-12">
                                     <div className="font-mono text-xs text-[var(--text-muted)]">
