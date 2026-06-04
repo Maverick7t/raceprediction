@@ -115,7 +115,7 @@ export function PodiumCard({
                     </div>
 
                     {/* Driver Name */}
-                    <div className="mt-4 flex flex-col leading-[0.9]">
+                    <div className="mt-4 flex flex-col leading-[1.2]">
                         <span
                             className="text-white"
                             style={{
