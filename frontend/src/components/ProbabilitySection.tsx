@@ -12,7 +12,7 @@ export default function ProbabilitySection({
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-2xl font-bold text-white font-barlow">
+                <h2 className="font-apax-th-superbold text-white text-3xl tracking-[0.03em] uppercase">
                     Winning Probability
                 </h2>
 
@@ -33,7 +33,7 @@ export default function ProbabilitySection({
                         >
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-baseline gap-2">
-                                    <h3 className="font-bold text-white font-barlow truncate">
+                                    <h3 className="font-f1 text-white truncate tracking-[0.03em]">
                                         {driver.driver_name || driver.driver_code}
                                     </h3>
 
