@@ -1,50 +1,11 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
-import { TeamBadge } from '../components/TeamBadge';
+import { DriverStandingCard } from '../components/DriverStandingCard';
 import { LoadingState, ErrorState } from '../components/LoadingError';
 import { getTeamTheme } from '../utils/teamColors';
 
 type Tab = 'drivers' | 'constructors';
-
-// Thin horizontal bar scaled to leader points
-function PointsBar({ points, max }: { points: number; max: number }) {
-    const pct = max > 0 ? (points / max) * 100 : 0;
-    return (
-        <div className="flex items-center gap-2 flex-1">
-            <div
-                className="flex-1 rounded-full overflow-hidden"
-                style={{ height: 3, background: 'var(--bg-elevated)' }}
-            >
-                <div
-                    className="h-full rounded-full"
-                    style={{
-                        width: `${pct}%`,
-                        background: 'var(--text-secondary)',
-                        transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-                    }}
-                />
-            </div>
-            <span className="font-mono text-xs text-[var(--text-primary)] w-10 text-right">
-                {points}
-            </span>
-        </div>
-    );
-}
-
-function PositionBadge({ pos }: { pos: number }) {
-    const colors: Record<number, string> = {
-        1: 'var(--accent-gold)',
-        2: 'var(--accent-silver)',
-        3: 'var(--accent-bronze)',
-    };
-    const c = colors[pos] ?? 'var(--text-muted)';
-    return (
-        <span className="font-display font-bold text-base w-8 shrink-0" style={{ color: c }}>
-            {pos}
-        </span>
-    );
-}
 
 export function StandingsPage() {
     const [tab, setTab] = useState<Tab>('drivers');
@@ -66,31 +27,42 @@ export function StandingsPage() {
 
     const driverData = driverQuery.data;
     const constructorData = constructorQuery.data;
-    const resolvedYear = year ?? driverData?.year ?? constructorData?.year ?? new Date().getFullYear();
-    const years = [resolvedYear, resolvedYear - 1, resolvedYear - 2];
 
-    const activeQuery = tab === 'drivers' ? driverQuery : constructorQuery;
+    const resolvedYear =
+        year ??
+        driverData?.year ??
+        constructorData?.year ??
+        new Date().getFullYear();
+
+    const years = [
+        resolvedYear,
+        resolvedYear - 1,
+        resolvedYear - 2,
+    ];
+
+    const activeQuery =
+        tab === 'drivers'
+            ? driverQuery
+            : constructorQuery;
+
     const drivers = driverData?.standings ?? [];
     const constructors = constructorData?.standings ?? [];
-
-    const maxDriverPts = Math.max(...drivers.map((d) => d.points), 1);
-    const maxConstructorPts = Math.max(...constructors.map((c) => c.points), 1);
 
     return (
         <div className="max-w-[1600px] mx-auto w-full px-4 md:px-10 py-6">
 
-            {/* Page header */}
+            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
                 <div>
                     <h1 className="font-apax-th-superbold text-2xl sm:text-3xl tracking-wide uppercase">
                         Championship
                     </h1>
+
                     <p className="font-f1 text-[10px] text-[var(--text-muted)] mt-0.5">
                         Season {resolvedYear}
                     </p>
                 </div>
 
-                {/* Year picker */}
                 <div className="flex gap-1">
                     {years.map((y) => (
                         <button
@@ -110,7 +82,9 @@ export function StandingsPage() {
             {/* Tabs */}
             <div
                 className="flex mb-6"
-                style={{ borderBottom: '1px solid var(--border-default)' }}
+                style={{
+                    borderBottom: '1px solid var(--border-default)',
+                }}
             >
                 {(['drivers', 'constructors'] as Tab[]).map((t) => (
                     <button
@@ -132,86 +106,88 @@ export function StandingsPage() {
             ) : activeQuery.error ? (
                 <ErrorState error={activeQuery.error as Error} />
             ) : tab === 'drivers' ? (
-                <div className="flex flex-col gap-px row-stagger">
-                    {drivers.map((d) => {
-                        const theme = getTeamTheme(d.team);
-                        return (
-                            <div
-                                key={d.driver_code}
-                                className="flex items-center gap-3 px-3 py-3 rounded-sm"
-                                style={{
-                                    background: 'var(--bg-surface)',
-                                    border: '1px solid var(--border-subtle)',
-                                }}
-                            >
-                                {/* Team accent strip */}
-                                <div
-                                    className="w-0.5 self-stretch rounded-full shrink-0"
-                                    style={{ background: theme.primary }}
-                                />
 
-                                <PositionBadge pos={d.position} />
-
-                                {/* Driver info */}
-                                <div className="w-58 shrink-0">
-                                    <div className="font-f1 text-white truncate tracking-[0.03em]">
-                                        {d.driver_name}
-                                    </div>
-                                    <div className="font-mono text-[10px] text-[var(--text-muted)]">
-                                        {d.driver_code}
-                                    </div>
-                                </div>
-
-                                {/* Team badge */}
-                                <TeamBadge teamId={d.team} size="sm" />
-
-                                {/* Points bar */}
-                                <PointsBar points={d.points} max={maxDriverPts} />
-
-                                {/* Wins */}
-                                <div className="text-right shrink-0 w-12">
-                                    <div className="font-mono text-xs text-[var(--text-muted)]">
-                                        {d.wins}W
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
+                <div
+                    className="
+                        grid
+                        grid-cols-1
+                        xl:grid-cols-2
+                        gap-5
+                        row-stagger
+                    "
+                >
+                    {drivers.map((driver) => (
+                        <DriverStandingCard
+                            key={driver.driver_code}
+                            position={driver.position}
+                            driverName={driver.driver_name}
+                            driverCode={driver.driver_code}
+                            team={driver.team}
+                            points={driver.points}
+                            wins={driver.wins}
+                        />
+                    ))}
                 </div>
+
             ) : (
-                <div className="flex flex-col gap-px row-stagger">
+
+                <div className="flex flex-col gap-3">
                     {constructors.map((c) => {
                         const theme = getTeamTheme(c.team_id);
+
                         return (
                             <div
                                 key={c.team_id}
-                                className="flex items-center gap-3 px-3 py-3 rounded-sm"
+                                className="flex items-center gap-4 px-4 py-4 rounded-xl"
                                 style={{
                                     background: 'var(--bg-surface)',
-                                    border: '1px solid var(--border-subtle)',
+                                    border:
+                                        '1px solid var(--border-subtle)',
                                 }}
                             >
                                 <div
-                                    className="w-0.5 self-stretch rounded-full shrink-0"
-                                    style={{ background: theme.primary }}
+                                    className="w-1 self-stretch rounded-full shrink-0"
+                                    style={{
+                                        background: theme.primary,
+                                    }}
                                 />
-                                <PositionBadge pos={c.position} />
+
+                                <div
+                                    className="font-bold text-lg w-10 shrink-0"
+                                    style={{
+                                        color: theme.primary,
+                                    }}
+                                >
+                                    P{c.position}
+                                </div>
+
                                 <div className="flex-1 min-w-0">
-                                    <div className="font-f1 text-white truncate tracking-[0.03em]">
+                                    <div className="font-f1 text-white truncate">
                                         {c.team}
                                     </div>
                                 </div>
 
-                                <PointsBar points={c.points} max={maxConstructorPts} />
-                                <div className="text-right shrink-0 w-12">
-                                    <div className="font-mono text-xs text-[var(--text-muted)]">
-                                        {c.wins}W
+                                <div className="text-right">
+                                    <div
+                                        className="text-white"
+                                        style={{
+                                            fontFamily:
+                                                'KHInterferenceF1',
+                                            fontSize: '32px',
+                                        }}
+                                    >
+                                        {c.points}
+                                    </div>
+
+                                    <div className="font-f1 text-[10px] text-[var(--text-muted)]">
+                                        POINTS
                                     </div>
                                 </div>
                             </div>
                         );
                     })}
                 </div>
+
             )}
         </div>
     );
