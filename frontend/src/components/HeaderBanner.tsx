@@ -10,7 +10,7 @@ export function HeaderBanner() {
             <div className="absolute inset-0 bg-black/55" />
 
             <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-16">
-                <h1 className="font-display text-4xl md:text-6xl font-bold tracking-wider text-white">
+                <h1 className="font-f1-black text-4xl md:text-4xl tracking-[0.06em] uppercase text-white">
                     F1 PREDICTIONS
                 </h1>
 
