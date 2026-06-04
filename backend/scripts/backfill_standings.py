@@ -1,14 +1,15 @@
 # scripts/backfill_standings.py
 import sys
 import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-
-from dotenv import load_dotenv
-load_dotenv()
-
 from app.integrations.ergast import ErgastClient
 from app.db.repositories.standings_repo import StandingsRepository
 from app.core.logging import get_logger
+
+
+from dotenv import load_dotenv
+load_dotenv()
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 
 logger = get_logger(__name__)
 ergast = ErgastClient()
