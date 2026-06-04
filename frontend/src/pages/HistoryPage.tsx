@@ -175,7 +175,7 @@ export function HistoryPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
                 <div>
-                    <h1 className="font-display font-bold text-2xl sm:text-3xl text-[var(--text-primary)] tracking-wide">
+                    <h1 className="font-apax-th-superbold text-2xl sm:text-3xl tracking-wide uppercase">
                         Prediction History
                     </h1>
                     <p className="font-mono text-[10px] text-[var(--text-muted)] mt-0.5">
