@@ -22,9 +22,12 @@ _prediction_repo = PredictionRepository()
 STALENESS_DAYS = 10
 
 
-@router.get("")
+@router.api_route("/", methods=["GET", "HEAD"])
 def health():
-    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
+    return {
+        "status": "ok",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 @router.get("/db")
