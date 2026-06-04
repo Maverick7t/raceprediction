@@ -112,7 +112,7 @@ export function PredictionsPage() {
                                     ROUND {selectedRace.round}
                                 </span>
                             </div>
-                            <h1 className="font-f1-bold text-2xl sm:text-3xl tracking-wide uppercase">
+                            <h1 className="font-apax-th-superbold text-2xl sm:text-3xl tracking-wide uppercase">
                                 {selectedRace.race_name}
                             </h1>
                             <p className="font-display text-sm sm:text-base uppercase tracking-widest text-[var(--text-secondary)] mt-2">
