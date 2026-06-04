@@ -61,6 +61,19 @@ body {
   font-family: "KHInterferenceF1", sans-serif;
 }
 
+.font-titillium {
+  font-family: "Titilliumsemi", sans-serif;
+}
+
+.font-apax-th {
+  font-family: "Apax TAG Heuer", sans-serif;
+}
+
+.font-apax-th-superbold {
+  font-family: "Apax TAG Heuer", sans-serif;
+  font-weight: 800;
+}
+
 @font-face {
   font-family: "Formula1R";
   src: url("/fonts/formula1/Formula1-Regular.woff2") format("woff2");
@@ -90,6 +103,24 @@ body {
   font-style: normal;
 }
 
+@font-face {
+  font-family: "Titillium Web";
+  src: url("./fonts/titillium/TitilliumWeb-SemiBold.ttf");
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Apax TAG Heuer";
+  src: url("./fonts/apax-th/Apax-TAG-Heuer-Regular.woff2");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Apax TAG Heuer";
+  src: url("./fonts/apax-th/Apax-TAG-Heuer-Superbold.woff2");
+  font-weight: 800;
+}
 
 /* ── Scrollbar ──────────────────────────────────── */
 ::-webkit-scrollbar          { width: 4px; height: 4px; }
