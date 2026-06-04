@@ -11,7 +11,10 @@ import { ordinal } from '../utils/format';
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2];
 
-// Expandable row that fetches prediction data on open
+// ---------------------------------------------------------------------------
+// RaceRow — expandable row that fetches prediction data on open
+// ---------------------------------------------------------------------------
+
 function RaceRow({ race }: { race: RaceListItem }) {
     const [open, setOpen] = useState(false);
 
@@ -24,7 +27,8 @@ function RaceRow({ race }: { race: RaceListItem }) {
 
     return (
         <div style={{ border: '1px solid var(--border-subtle)', borderRadius: '2px' }}>
-            {/* Row header */}
+
+            {/* ── Row header ── */}
             <button
                 onClick={() => setOpen((v) => !v)}
                 className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-white/5"
@@ -32,13 +36,13 @@ function RaceRow({ race }: { race: RaceListItem }) {
             >
                 {/* Round */}
                 <div className="flex items-center gap-2 w-20 shrink-0">
-                    <span className="font-mono text-[10px] text-[var(--text-muted)]">{race.year}</span>
-                    <span className="font-mono text-[10px] text-[var(--text-muted)]">R{race.round}</span>
+                    <span className="font-f1 text-[14px] text-[var(--text-muted)]">{race.year}</span>
+                    <span className="font-f1 text-[14px] text-[var(--text-muted)]">R{race.round}</span>
                 </div>
 
                 {/* Race name */}
                 <div className="flex-1 min-w-0">
-                    <div className="font-display font-semibold text-sm text-[var(--text-primary)] truncate">
+                    <div className="font-f1 text-white truncate tracking-[0.03em]">
                         {race.race_name}
                     </div>
                     <div className="font-mono text-[10px] text-[var(--text-muted)]">
@@ -65,13 +69,14 @@ function RaceRow({ race }: { race: RaceListItem }) {
                     className="shrink-0 transition-transform duration-200"
                     style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
                     width="14" height="14" viewBox="0 0 24 24" fill="none"
-                    stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    stroke="var(--text-muted)" strokeWidth="2"
+                    strokeLinecap="round" strokeLinejoin="round"
                 >
                     <polyline points="6 9 12 15 18 9" />
                 </svg>
             </button>
 
-            {/* Expanded predictions */}
+            {/* ── Expanded predictions ── */}
             {open && (
                 <div
                     className="border-t"
@@ -85,11 +90,33 @@ function RaceRow({ race }: { race: RaceListItem }) {
                         <EmptyState label="No predictions stored" />
                     ) : (
                         <div className="flex flex-col gap-px p-2">
-                            <div className="flex items-center justify-between px-2 pb-1 text-[9px] font-mono uppercase tracking-widest text-[var(--text-muted)]">
-                                <span>{data.model_version}</span>
-                                <span>{data.generated_at}</span>
+
+                            {/* Header row */}
+                            <div
+                                className="hidden sm:grid items-center gap-2 px-2 pb-2 mb-1 border-b border-slate-800"
+                                style={{ gridTemplateColumns: '1fr 4rem 1fr 1fr 3rem 4rem' }}
+                            >
+                                <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500">
+                                    Driver
+                                </div>
+                                <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500">
+                                    Team
+                                </div>
+                                <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500 text-center">
+                                    Win %
+                                </div>
+                                <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500 text-center">
+                                    Podium %
+                                </div>
+                                <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500 text-center">
+                                    Rank
+                                </div>
+                                <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500 text-right">
+                                    Grid
+                                </div>
                             </div>
 
+                            {/* Data rows */}
                             {[...data.predictions]
                                 .sort((a, b) => a.predicted_rank - b.predicted_rank)
                                 .map((p, i) => {
@@ -100,19 +127,13 @@ function RaceRow({ race }: { race: RaceListItem }) {
                                             key={p.driver_code}
                                             className="flex sm:grid items-center gap-2 px-2 py-2 rounded-sm"
                                             style={{
-                                                gridTemplateColumns: '1.5rem 1fr 5rem 1fr 1fr 3rem 4rem',
+                                                gridTemplateColumns: '1fr 4rem 1fr 1fr 3rem 4rem',
                                                 background: i % 2 === 0 ? 'var(--bg-surface)' : 'transparent',
                                             }}
                                         >
-                                            {/* Team accent */}
-                                            <div
-                                                className="w-0.5 self-stretch rounded-full shrink-0"
-                                                style={{ background: theme.primary }}
-                                            />
-
                                             {/* Driver */}
                                             <div className="flex-1 min-w-0">
-                                                <div className="font-display font-semibold text-xs text-[var(--text-primary)] truncate">
+                                                <div className="font-f1 text-white truncate tracking-[0.03em]">
                                                     {p.driver_name ?? p.driver_code}
                                                 </div>
                                             </div>
@@ -124,22 +145,30 @@ function RaceRow({ race }: { race: RaceListItem }) {
 
                                             {/* Win bar */}
                                             <div className="hidden sm:block pr-3">
-                                                <ProbabilityBar value={p.predicted_winner_prob} color={theme.primary} height={3} />
+                                                <ProbabilityBar
+                                                    value={p.predicted_winner_prob}
+                                                    color={theme.primary}
+                                                    height={3}
+                                                />
                                             </div>
 
                                             {/* Podium bar */}
                                             <div className="hidden sm:block pr-3">
-                                                <ProbabilityBar value={p.predicted_podium_prob} color={theme.primary} height={3} />
+                                                <ProbabilityBar
+                                                    value={p.predicted_podium_prob}
+                                                    color={theme.primary}
+                                                    height={3}
+                                                />
                                             </div>
 
                                             {/* Predicted rank */}
-                                            <div className="font-mono text-[10px] text-[var(--text-muted)] text-right shrink-0">
+                                            <div className="font-f1 text-white truncate tracking-[0.03em]">
                                                 {ordinal(p.predicted_rank)}
                                             </div>
 
                                             {/* Qualifying position */}
                                             <div className="text-right shrink-0">
-                                                <span className="font-mono text-[10px] text-[var(--text-muted)]">
+                                                <span className="font-f1 text-white truncate tracking-[0.03em]">
                                                     Q{p.qualifying_position ?? '—'}
                                                 </span>
                                             </div>
@@ -154,6 +183,10 @@ function RaceRow({ race }: { race: RaceListItem }) {
     );
 }
 
+// ---------------------------------------------------------------------------
+// HistoryPage
+// ---------------------------------------------------------------------------
+
 export function HistoryPage() {
     const [year, setYear] = useState(CURRENT_YEAR);
 
@@ -164,9 +197,7 @@ export function HistoryPage() {
     });
 
     const filtered = (races ?? [])
-        .filter((r) => {
-            return r.year === year;
-        })
+        .filter((r) => r.year === year)
         .sort((a, b) => b.round - a.round);
 
     return (
@@ -184,17 +215,21 @@ export function HistoryPage() {
                 </div>
 
                 {/* Year picker */}
-                <div className="flex gap-1">
+                <div className="flex items-center gap-6">
                     {YEARS.map((y) => (
                         <button
                             key={y}
                             onClick={() => setYear(y)}
-                            className={`px-3 py-1.5 text-xs font-mono rounded-sm border transition-colors ${year === y
-                                ? 'border-[var(--accent-red)] text-[var(--accent-red)] bg-[var(--accent-red)]/10'
-                                : 'border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                            className={`relative pb-2 font-f1 text-sm tracking-[0.08em] transition-colors ${year === y
+                                ? 'text-white'
+                                : 'text-slate-500 hover:text-slate-300'
                                 }`}
                         >
                             {y}
+
+                            {year === y && (
+                                <span className="absolute left-0 bottom-0 h-[2px] w-full bg-red-500" />
+                            )}
                         </button>
                     ))}
                 </div>
