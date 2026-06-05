@@ -260,10 +260,6 @@ The API serves precomputed predictions rather than generating predictions at req
 
 * Predictions are not real-time
 
-```
-```
-
-
 ---
 ## How It Works
 
