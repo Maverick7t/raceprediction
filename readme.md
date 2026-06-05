@@ -360,32 +360,15 @@ SENTRY_DSN=          # optional
 BETTERSTACK_TOKEN=   # optional
 ```
 
-### Local API
+### Local run
 
 ```bash
-conda activate f1env
-pip install -r backend/requirements.txt
 
-# Apply migrations
-cd backend && alembic upgrade head
-
-# Backfill historical data (2018–2024, ~60–90 min, Ergast rate-limited)
-python -m scripts.backfill --from-year 2018 --to-year 2024
-
-# Train initial model
-python -m workers.flows.retrain_flow
+#front end
+npm run dev
 
 # Start API
 uvicorn main:app --reload --port 8000
-```
-
-### Local Frontend
-
-```bash
-cd frontend
-npm install
-# Set VITE_API_BASE_URL=http://localhost:8000 in frontend/.env
-npm run dev
 ```
 
 ### Docker
@@ -395,30 +378,18 @@ docker build -f backend/Dockerfile -t f1-api ./backend
 docker run -p 8000:8000 --env-file .env f1-api
 ```
 
-### Run a flow manually
-
-```bash
-# Post-qualifying (ingest + features + inference)
-python -m workers.flows.post_qualifying_flow 2025 10
-
-# Sync standings
-python -m scripts.cron_sync_standings
-```
-
----
-
 ## API Endpoints
 
 ```
-GET /api/v1/predictions                → latest race predictions (ranked)
-GET /api/v1/predictions/{race_key}     → predictions for a specific race
-GET /api/v1/predictions/races          → all race keys with stored predictions
-GET /api/v1/standings/drivers?year=    → driver championship standings
+GET /api/v1/predictions                    → latest race predictions (ranked)
+GET /api/v1/predictions/{race_key}         → predictions for a specific race
+GET /api/v1/predictions/races              → all race keys with stored predictions
+GET /api/v1/standings/drivers?year=        → driver championship standings
 GET /api/v1/standings/constructors?year=
-GET /api/v1/races                      → all qualifying sessions in the database
-GET /api/v1/health                     → process alive
-GET /api/v1/health/db                  → DB reachable + prediction staleness check
-GET /api/v1/health/model               → model loaded, version, feature count
+GET /api/v1/races                          → all qualifying sessions in the database
+GET /api/v1/health                         → process alive
+GET /api/v1/health/db                      → DB reachable + prediction staleness check
+GET /api/v1/health/model                   → model loaded, version, feature count
 ```
 
 All responses are JSON. Routes are read-only and public. Writes (retrain trigger, winner update) require a bearer token.
