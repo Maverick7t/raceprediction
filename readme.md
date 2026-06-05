@@ -341,42 +341,7 @@ Feature importance leaders: `qualifying_position`, `podium_rate`, `avg_quali_las
 
 ---
 
-## Project Structure
 
-```
-backend/
-├── app/
-│   ├── api/v1/          # Thin route handlers (predictions, standings, health)
-│   ├── core/            # Config, logging, Sentry init
-│   ├── db/
-│   │   ├── models/      # SQLAlchemy ORM models
-│   │   └── repositories/# All DB reads/writes — one class per table group
-│   ├── features/        # compute.py — 14 rolling feature functions
-│   ├── integrations/    # ergast.py · fastf1_client.py · openf1.py
-│   ├── ml/
-│   │   ├── inference/   # InferenceEngine, artifact loader
-│   │   ├── training/    # trainer.py, evaluator.py (promotion gate)
-│   │   └── storage/     # Supabase Storage upload/download
-│   ├── services/        # prediction_service.py (orchestrates inference)
-│   └── validation/      # Pandera schemas for all 3 raw tables
-├── workers/
-│   ├── flows/           # post_qualifying · post_race · retrain · feature_engineering
-│   └── tasks/           # fetch · validate · store · inference tasks
-├── scripts/             # backfill.py — one time historical ingest (2018–2024)
-├── tests/unit/          # Feature, validation, repo, training, inference tests
-├── alembic/             # Migration chain — all schema changes versioned
-└── Dockerfile           # Two stage build (builder + runtime, non root user)
-
-frontend/
-├── src/
-│   ├── api/client.ts    # Typed fetch layer — only place that knows the API URL
-│   ├── hooks/           # useF1Data — TanStack Query wrappers
-│   ├── components/      # PredictionCard, PodiumCard, standings cards
-│   └── pages/           # Predictions · Standings · History
-└── vercel.json          # SPA rewrite rule
-```
-
----
 
 ## Running It Yourself
 
