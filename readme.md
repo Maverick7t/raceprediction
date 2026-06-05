@@ -1,6 +1,6 @@
 # F1 Prediction System
 
-A production-grade Formula 1 race prediction engine that ingests qualifying and telemetry data from multiple APIs, engineers rolling features, trains XGBoost classifiers, and serves winner/podium probabilities through a versioned REST API — fully automated across an entire race season with no manual intervention.
+A production grade Formula 1 race prediction engine that ingests qualifying and telemetry data from multiple APIs, engineers rolling features, trains XGBoost classifiers, and serves winner/podium probabilities through a versioned REST API fully automated across an entire race season with no manual intervention.
 
 ---
 
@@ -18,139 +18,251 @@ Training runs automatically when enough new race results have accumulated. A pro
 
 ---
 
-## Architecture
+
 
 ## System Architecture
 
+
+The platform follows a modular monolith architecture with automated race weekend data pipelines, offline machine learning inference, and a read optimized API layer.
+
+---
+
+### 1. System Context
+
+This diagram shows the system from a stakeholder perspective.
+
 ```mermaid
-flowchart TB
+flowchart LR
 
-    %% =========================
-    %% External Data Sources
-    %% =========================
-    subgraph External_APIs["External Data Sources"]
-        FastF1["FastF1"]
-        Ergast["Jolpica / Ergast"]
-        OpenF1["OpenF1"]
-    end
+    User["F1 Fans & Analysts"]
 
-    %% =========================
-    %% Orchestration
-    %% =========================
-    subgraph Orchestration["Workflow Orchestration"]
-        GHA["GitHub Actions"]
-        Prefect["Prefect Flows"]
-    end
+    Frontend["React Frontend<br/>Vercel"]
 
-    GHA --> Prefect
+    API["FastAPI Prediction API"]
 
-    FastF1 --> Prefect
-    Ergast --> Prefect
-    OpenF1 --> Prefect
+    Sources["FastF1<br/>Jolpica / Ergast<br/>OpenF1"]
 
-    %% =========================
-    %% Validation
-    %% =========================
-    Prefect --> Validation["Pandera Validation"]
+    User --> Frontend
+    Frontend --> API
+    Sources --> API
+```
 
-    Validation --> ValidationFailures["validation_failures"]
+---
 
-    %% =========================
-    %% Raw Storage
-    %% =========================
-    Validation --> Qualifying["qualifying_raw"]
-    Validation --> Results["results_raw"]
-    Validation --> Telemetry["telemetry_raw"]
+### 2. Platform Architecture
 
-    %% =========================
-    %% Database
-    %% =========================
-    subgraph Supabase["Supabase PostgreSQL"]
-        Qualifying
-        Results
-        Telemetry
-        ValidationFailures
-        Features["features_by_race (versioned)"]
-        Predictions["predictions"]
-    end
+This diagram shows the major containers and how data moves through the platform.
 
-    %% =========================
-    %% Feature Engineering
-    %% =========================
-    Qualifying --> FeaturePipeline["Feature Engineering"]
-    Results --> FeaturePipeline
-    Telemetry --> FeaturePipeline
+```mermaid
+flowchart LR
 
-    FeaturePipeline --> Features
+    Sources["External APIs<br/>FastF1 · Ergast · OpenF1"]
 
-    %% =========================
-    %% ML Training
-    %% =========================
-    Features --> Trainer["XGBoost Training"]
+    Workers["Data Pipelines<br/>Prefect Flows"]
 
-    Trainer --> Metrics["Model Evaluation"]
-    Metrics --> Promotion["Promotion Gate"]
+    Database["Supabase PostgreSQL"]
 
-    Promotion --> MLflow["MLflow Registry"]
+    ML["ML Platform<br/>Training + Inference"]
 
-    Promotion --> Artifacts["Model Artifacts"]
+    API["FastAPI Backend"]
 
-    %% =========================
-    %% Artifact Storage
-    %% =========================
-    subgraph Storage["Supabase Storage"]
-        Artifacts
-    end
+    Frontend["React Frontend"]
 
-    %% =========================
-    %% Offline Inference
-    %% =========================
-    Features --> Inference["Offline Inference Engine"]
+    Users["Users"]
 
+    Sources --> Workers
+    Workers --> Database
+
+    Database --> ML
+    ML --> Database
+
+    Database --> API
+
+    API --> Frontend
+    Frontend --> Users
+```
+
+---
+
+### 3. End-to-End Prediction Pipeline
+
+This diagram shows how predictions are produced after qualifying sessions.
+
+```mermaid
+flowchart LR
+
+    APIs["FastF1 / Ergast / OpenF1"]
+
+    Ingestion["Ingestion Flow"]
+
+    Validation["Pandera Validation"]
+
+    Raw["Raw Tables"]
+
+    Features["Feature Engineering"]
+
+    Training["XGBoost Training"]
+
+    Registry["MLflow"]
+
+    Artifacts["Model Artifacts"]
+
+    Inference["Offline Inference"]
+
+    Predictions["Predictions Table"]
+
+    API["FastAPI"]
+
+    Frontend["React"]
+
+    APIs --> Ingestion
+    Ingestion --> Validation
+    Validation --> Raw
+
+    Raw --> Features
+
+    Features --> Training
+    Training --> Registry
+    Registry --> Artifacts
+
+    Features --> Inference
     Artifacts --> Inference
 
     Inference --> Predictions
 
-    %% =========================
-    %% API Layer
-    %% =========================
-    subgraph Backend["FastAPI Backend"]
-        API["/api/v1"]
-        Health["Health Endpoints"]
-        Repositories["Repository Layer"]
-    end
-
-    Predictions --> Repositories
-    Features --> Repositories
-
-    Repositories --> API
-    Repositories --> Health
-
-    Artifacts --> API
-
-    %% =========================
-    %% Frontend
-    %% =========================
-    subgraph Frontend["React + Vite"]
-        UI["Predictions / Standings / History"]
-    end
-
-    API --> UI
-
-    %% =========================
-    %% Observability
-    %% =========================
-    subgraph Monitoring["Observability"]
-        Sentry["Sentry"]
-        BetterStack["Better Stack"]
-    end
-
-    Prefect --> Sentry
-    API --> Sentry
-
-    Prefect --> BetterStack
-    API --> BetterStack
+    Predictions --> API
+    API --> Frontend
 ```
+
+---
+
+### 4. Backend Architecture
+
+The backend follows a layered architecture. HTTP routes remain thin while business logic and persistence concerns are separated.
+
+```mermaid
+flowchart LR
+
+    Routes["API Routes"]
+
+    Services["Service Layer"]
+
+    Repositories["Repository Layer"]
+
+    Database["Supabase PostgreSQL"]
+
+    Inference["Inference Engine"]
+
+    Artifacts["Model Artifacts"]
+
+    Routes --> Services
+
+    Services --> Repositories
+    Repositories --> Database
+
+    Services --> Inference
+    Inference --> Artifacts
+```
+
+---
+
+### 5. Infrastructure & Operations
+
+Production deployment, monitoring, and CI/CD.
+
+```mermaid
+flowchart LR
+
+    GitHub["GitHub Actions"]
+
+    Render["Render"]
+
+    Vercel["Vercel"]
+
+    Supabase["Supabase"]
+
+    Sentry["Sentry"]
+
+    BetterStack["Better Stack"]
+
+    GitHub --> Render
+    GitHub --> Vercel
+
+    Render --> Supabase
+
+    Render -. Logs .-> Sentry
+    Render -. Metrics .-> BetterStack
+```
+
+---
+
+### Key Architectural Decisions
+
+#### Offline Inference
+
+Predictions are generated immediately after qualifying and stored in the database.
+
+**Benefits**
+
+* Low API latency
+* Predictable infrastructure cost
+* No model execution during requests
+
+**Trade-offs**
+
+* Predictions update only when the pipeline runs
+
+---
+
+#### Feature Versioning
+
+Every feature row contains a `feature_version`.
+
+**Benefits**
+
+* Reproducible training runs
+* Safe feature evolution
+* Historical model compatibility
+
+**Trade-offs**
+
+* Additional storage overhead
+
+---
+
+#### Modular Monolith
+
+API, ML, workers, repositories, and services are deployed as a single application.
+
+**Benefits**
+
+* Simpler deployment model
+* Lower operational complexity
+* Faster development velocity
+
+**Trade offs**
+
+* Independent component scaling is limited
+
+---
+
+#### Read-Optimized API
+
+The API serves precomputed predictions rather than generating predictions at request time.
+
+**Benefits**
+
+* Consistent response times
+* Reduced infrastructure requirements
+* Better fault isolation
+
+**Trade offs**
+
+* Predictions are not real-time
+
+```
+```
+
 
 ---
 ## How It Works
@@ -159,25 +271,39 @@ flowchart TB
 External APIs (FastF1 · Ergast/Jolpica · OpenF1)
         │
         ▼
+
   Prefect Flows  ──── GitHub Actions (schedule / trigger)
         │
+        ▼
+
   Pandera Validation  →  validation_failures audit table
         │
+        ▼
+
   qualifying_raw · results_raw · telemetry_raw   (Supabase / Postgres)
         │
+        ▼
+
   Feature Engineering  →  features_by_race  (versioned, v1/v2/...)
         │
+        ▼
+
   XGBoost Training  →  MLflow experiment registry
         │  (time-based split, auto-promotion gate)
+        ▼
+
   models/ (xgb_winner.json · xgb_podium.json · metadata.json)
         │  (persisted to Supabase Storage, survives Render redeploys)
         ▼
+
   FastAPI  ─── /api/v1/predictions · /standings · /races · /health
         │
+        ▼
+
   React / Vite Frontend  (Vercel)
 ```
 
-**Pipeline triggers** are handled by GitHub Actions workflows on known race-weekend dates (post-qualifying Saturday, post-race Sunday). Flows are Prefect-decorated Python scripts run directly via `python -m workers.flows.<flow>`, so there is no dependency on Prefect Cloud.
+**Pipeline triggers** are handled by GitHub Actions workflows on known race weekend dates (post qualifying Saturday, post race Sunday). Flows are Prefect decorated Python scripts run directly via `python -m workers.flows.<flow>`, so there is no dependency on Prefect Cloud.
 
 **Feature versioning** — every row in `features_by_race` carries a `feature_version` column (`v1`, `v2`, …). Training and inference always read the same version. Adding or renaming a feature bumps the version; old rows remain queryable.
 
@@ -236,10 +362,10 @@ backend/
 ├── workers/
 │   ├── flows/           # post_qualifying · post_race · retrain · feature_engineering
 │   └── tasks/           # fetch · validate · store · inference tasks
-├── scripts/             # backfill.py — one-time historical ingest (2018–2024)
+├── scripts/             # backfill.py — one time historical ingest (2018–2024)
 ├── tests/unit/          # Feature, validation, repo, training, inference tests
 ├── alembic/             # Migration chain — all schema changes versioned
-└── Dockerfile           # Two-stage build (builder + runtime, non-root user)
+└── Dockerfile           # Two stage build (builder + runtime, non root user)
 
 frontend/
 ├── src/
