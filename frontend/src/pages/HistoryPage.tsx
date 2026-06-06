@@ -143,12 +143,12 @@ function RaceRow({ race }: { race: RaceListItem }) {
                                                     </div>
 
                                                     {/* Team */}
-                                                    <div className="hidden sm:flex">
+                                                    <div className="flex">
                                                         <TeamBadge teamId={p.team_id} size="sm" />
                                                     </div>
 
                                                     {/* Win bar */}
-                                                    <div className="hidden sm:block pr-3">
+                                                    <div className="pr-3">
                                                         <ProbabilityBar
                                                             value={p.predicted_winner_prob}
                                                             color={theme.primary}
@@ -157,7 +157,7 @@ function RaceRow({ race }: { race: RaceListItem }) {
                                                     </div>
 
                                                     {/* Podium bar */}
-                                                    <div className="hidden sm:block pr-3">
+                                                    <div className="pr-3">
                                                         <ProbabilityBar
                                                             value={p.predicted_podium_prob}
                                                             color={theme.primary}
