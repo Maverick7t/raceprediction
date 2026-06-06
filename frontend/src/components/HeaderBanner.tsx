@@ -9,12 +9,12 @@ export function HeaderBanner() {
 
             <div className="absolute inset-0 bg-black/55" />
 
-            <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-16">
-                <h1 className="font-f1-black text-4xl md:text-4xl tracking-[0.06em] uppercase text-white">
+            <div className="absolute inset-0 flex flex-col justify-center px-4 md:px-16">
+                <h1 className="font-f1-bold text-2xl sm:text-3xl md:text-4xl tracking-[0.0em] uppercase text-white">
                     F1 PREDICTIONS
                 </h1>
 
-                <p className="mt-3 font-mono text-sm md:text-base text-slate-300">
+                <p className="mt-3 font-titillium text-sm md:text-base text-slate-300">
                     AI Race Forecasting
                 </p>
             </div>
