@@ -50,7 +50,7 @@ export function ConstructorStandingCard({
             <img
                 src={`/cars/${teamId}.png`}
                 alt={teamName}
-                className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 w-[60%] md:w-[70%] xl:w-[75%] object-contain pointer-events-none"
+                className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 w-[95%] md:w-[70%] xl:w-[75%] object-contain pointer-events-none"
             />
 
             {/* Content */}
