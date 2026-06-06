@@ -98,22 +98,20 @@ export function DriverStandingCard({
                 </div>
 
                 {/* Driver */}
-                <div className="mt-3">
+                <div className="mt-3 max-w-[55%] md:max-w-[60%]">
                     <div
-                        className="text-white"
+                        className=" text-white text-[14px] md:text-[18px] "
                         style={{
                             fontFamily: "Formula1R",
-                            fontSize: "18px",
                         }}
                     >
                         {firstName}
                     </div>
 
                     <div
-                        className="text-white leading-none"
+                        className=" text-white leading-none text-[20px] md:text-[34px] "
                         style={{
                             fontFamily: "Formula1B",
-                            fontSize: "34px",
                         }}
                     >
                         {lastName}
@@ -138,7 +136,7 @@ export function DriverStandingCard({
                             className="text-white"
                             style={{
                                 fontFamily: "KHInterferenceF1",
-                                fontSize: "38px",
+                                fontSize: "28px",
                             }}
                         >
                             {points}
@@ -154,7 +152,7 @@ export function DriverStandingCard({
                             className="text-white"
                             style={{
                                 fontFamily: "KHInterferenceF1",
-                                fontSize: "38px",
+                                fontSize: "28px",
                             }}
                         >
                             {wins}
