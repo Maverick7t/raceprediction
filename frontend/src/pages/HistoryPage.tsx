@@ -90,91 +90,109 @@ function RaceRow({ race }: { race: RaceListItem }) {
                         <EmptyState label="No predictions stored" />
                     ) : (
                         <div className="flex flex-col gap-px p-2">
+                            <div className="overflow-x-auto scrollbar-hide">
+                                <div className="min-w-[700px]">
 
-                            {/* Header row */}
-                            <div
-                                className="hidden sm:grid items-center gap-2 px-2 pb-2 mb-1 border-b border-slate-800"
-                                style={{ gridTemplateColumns: '1fr 4rem 1fr 1fr 3rem 4rem' }}
-                            >
-                                <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500">
-                                    Driver
-                                </div>
-                                <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500">
-                                    Team
-                                </div>
-                                <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500 text-center">
-                                    Win %
-                                </div>
-                                <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500 text-center">
-                                    Podium %
-                                </div>
-                                <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500 text-center">
-                                    Rank
-                                </div>
-                                <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500 text-right">
-                                    Grid
+                                    {/* Header row */}
+                                    <div
+                                        className="grid items-center gap-2 px-2 pb-2 mb-1 border-b border-slate-800"
+                                        style={{ gridTemplateColumns: '1fr 4rem 1fr 1fr 3rem 4rem' }}
+                                    >
+                                        <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500">
+                                            Driver
+                                        </div>
+                                        <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500">
+                                            Team
+                                        </div>
+                                        <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500 text-center">
+                                            Win %
+                                        </div>
+                                        <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500 text-center">
+                                            Podium %
+                                        </div>
+                                        <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500 text-center">
+                                            Rank
+                                        </div>
+                                        <div className="font-mono text-[14px] uppercase tracking-widest text-slate-500 text-right">
+                                            Grid
+                                        </div>
+                                    </div>
+
+
+
+                                    {/* Data rows */}
+                                    {[...data.predictions]
+                                        .sort((a, b) => a.predicted_rank - b.predicted_rank)
+                                        .map((p, i) => {
+                                            const theme = getTeamTheme(p.team_id);
+
+                                            return (
+                                                <div
+                                                    key={p.driver_code}
+                                                    className="grid items-center gap-2 px-2 py-2 rounded-sm"
+                                                    style={{
+                                                        gridTemplateColumns: '1fr 4rem 1fr 1fr 3rem 4rem',
+                                                        background: i % 2 === 0 ? 'var(--bg-surface)' : 'transparent',
+                                                    }}
+                                                >
+                                                    {/* Driver */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-f1 text-white truncate tracking-[0.03em]">
+                                                            {p.driver_name ?? p.driver_code}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Team */}
+                                                    <div className="hidden sm:flex">
+                                                        <TeamBadge teamId={p.team_id} size="sm" />
+                                                    </div>
+
+                                                    {/* Win bar */}
+                                                    <div className="hidden sm:block pr-3">
+                                                        <ProbabilityBar
+                                                            value={p.predicted_winner_prob}
+                                                            color={theme.primary}
+                                                            height={3}
+                                                        />
+                                                    </div>
+
+                                                    {/* Podium bar */}
+                                                    <div className="hidden sm:block pr-3">
+                                                        <ProbabilityBar
+                                                            value={p.predicted_podium_prob}
+                                                            color={theme.primary}
+                                                            height={3}
+                                                        />
+                                                    </div>
+
+                                                    {/* Predicted rank */}
+                                                    <div className="flex items-start text-white font-f1">
+                                                        <span className="text-base">
+                                                            {p.predicted_rank}
+                                                        </span>
+
+                                                        <span className="text-[9px] mt-[1px] ml-[1px]">
+                                                            {ordinal(p.predicted_rank).replace(String(p.predicted_rank), '')}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Qualifying position */}
+                                                    <div className="flex items-start justify-end">
+                                                        <span className="font-f1 text-white">
+                                                            Q
+                                                        </span>
+
+                                                        <span
+                                                            className="font-f1 text-[12px] text-white/80 mt-[1px] "
+                                                        >
+                                                            {p.qualifying_position}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                 </div>
                             </div>
-
-                            {/* Data rows */}
-                            {[...data.predictions]
-                                .sort((a, b) => a.predicted_rank - b.predicted_rank)
-                                .map((p, i) => {
-                                    const theme = getTeamTheme(p.team_id);
-
-                                    return (
-                                        <div
-                                            key={p.driver_code}
-                                            className="flex sm:grid items-center gap-2 px-2 py-2 rounded-sm"
-                                            style={{
-                                                gridTemplateColumns: '1fr 4rem 1fr 1fr 3rem 4rem',
-                                                background: i % 2 === 0 ? 'var(--bg-surface)' : 'transparent',
-                                            }}
-                                        >
-                                            {/* Driver */}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="font-f1 text-white truncate tracking-[0.03em]">
-                                                    {p.driver_name ?? p.driver_code}
-                                                </div>
-                                            </div>
-
-                                            {/* Team */}
-                                            <div className="hidden sm:flex">
-                                                <TeamBadge teamId={p.team_id} size="sm" />
-                                            </div>
-
-                                            {/* Win bar */}
-                                            <div className="hidden sm:block pr-3">
-                                                <ProbabilityBar
-                                                    value={p.predicted_winner_prob}
-                                                    color={theme.primary}
-                                                    height={3}
-                                                />
-                                            </div>
-
-                                            {/* Podium bar */}
-                                            <div className="hidden sm:block pr-3">
-                                                <ProbabilityBar
-                                                    value={p.predicted_podium_prob}
-                                                    color={theme.primary}
-                                                    height={3}
-                                                />
-                                            </div>
-
-                                            {/* Predicted rank */}
-                                            <div className="font-f1 text-white truncate tracking-[0.03em]">
-                                                {ordinal(p.predicted_rank)}
-                                            </div>
-
-                                            {/* Qualifying position */}
-                                            <div className="text-right shrink-0">
-                                                <span className="font-f1 text-white truncate tracking-[0.03em]">
-                                                    Q{p.qualifying_position ?? '—'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
                         </div>
                     )}
                 </div>
@@ -209,9 +227,6 @@ export function HistoryPage() {
                     <h1 className="font-apax-th-superbold text-2xl sm:text-3xl tracking-wide uppercase">
                         Prediction History
                     </h1>
-                    <p className="font-mono text-[10px] text-[var(--text-muted)] mt-0.5">
-                        Click a race to see stored prediction snapshots
-                    </p>
                 </div>
 
                 {/* Year picker */}
