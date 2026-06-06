@@ -35,11 +35,17 @@ export default function ProbabilitySection({
                         >
                             <div className="flex-1 ">
                                 <div className="flex items-baseline gap-2">
-                                    <h3 className="font-f1 text-white  tracking-[0.03em]">
-                                        {driver.driver_name || driver.driver_code}
+                                    <h3 className="font-f1 text-white tracking-[0.03em]">
+                                        <span className="sm:hidden">
+                                            {driver.driver_code}
+                                        </span>
+
+                                        <span className="hidden sm:inline">
+                                            {driver.driver_name || driver.driver_code}
+                                        </span>
                                     </h3>
 
-                                    <span className="text-[10px] text-slate-500 font-mono uppercase shrink-0">
+                                    <span className="text-[10px] text-slate-500 font-mono uppercase shrink-0 truncate">
                                         {theme.name.slice(0, 3)}
                                     </span>
                                 </div>
