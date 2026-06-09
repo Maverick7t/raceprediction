@@ -20,15 +20,16 @@ from typing import Optional
  
 import pandas as pd
 import requests
- 
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
 from app.core.config import config
 from app.core.exceptions import IngestionError
 from app.core.logging import get_logger
  
 logger = get_logger(__name__)
  
-_TIMEOUT = 10        # seconds per request
-_MAX_RETRIES = 3
+_TIMEOUT = (15, 60)        # seconds per request
+_MAX_RETRIES = 5
 _BACKOFF_BASE = 2.0  # seconds; doubles per retry: 2s, 4s, 8s
  
  
@@ -39,8 +40,23 @@ class ErgastClient:
         self._session = requests.Session()
         self._session.headers.update({"Accept": "application/json"})
 
+        retry_strategy = Retry(
+            total=5,
+            connect=5,
+            read=5,
+            status=5,
+            backoff_factor=2,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["GET"],
+        )
 
-        # ------------------------------------------------------------------
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+
+        self._session.mount("https://", adapter)
+        self._session.mount("http://", adapter)
+
+
+    # ------------------------------------------------------------------
     # Public methods
     # ------------------------------------------------------------------
  
@@ -217,9 +233,17 @@ class ErgastClient:
                 resp.raise_for_status()
                 return resp.json()
  
-            except requests.exceptions.Timeout as e:
+            except requests.exceptions.ConnectTimeout as e:
                 last_exc = e
-                logger.warning(f"Timeout on attempt {attempt}: {url}")
+                logger.warning(
+                    f"Connect timeout attempt={attempt} url={url}"
+                )
+
+            except requests.exceptions.ReadTimeout as e:
+                last_exc = e
+                logger.warning(
+                    f"Read timeout attempt={attempt} url={url}"
+                )
             except requests.exceptions.HTTPError as e:
                 raise IngestionError(
                     "ergast", f"HTTP {e.response.status_code}: {url}"
