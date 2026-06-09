@@ -21,7 +21,7 @@ from typing import Optional
 import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
-from urllib3.util import Retry
+from urllib3.util.retry import Retry
 from app.core.config import config
 from app.core.exceptions import IngestionError
 from app.core.logging import get_logger
@@ -46,8 +46,9 @@ class ErgastClient:
             read=5,
             status=5,
             backoff_factor=2,
-            status_forcelist=[429, 500, 502, 503, 504],
+            status_forcelist=[500, 502, 503, 504],
             allowed_methods=["GET"],
+            raise_on_status=False,
         )
 
         adapter = HTTPAdapter(max_retries=retry_strategy)
